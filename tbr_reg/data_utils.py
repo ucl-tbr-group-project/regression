@@ -1,5 +1,13 @@
+import os
+
 import pandas as pd
 import numpy as np
+
+
+def load_batches(in_dir, batch_range, file_template='batch%d_out.csv'):
+    file_paths = [os.path.join(in_dir, file_template % batch_idx)
+                  for batch_idx in range(batch_range[0], batch_range[1])]
+    return pd.concat([pd.read_csv(file_path) for file_path in file_paths])
 
 
 def encode_data_frame(df, domain):
