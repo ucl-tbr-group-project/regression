@@ -6,6 +6,10 @@ import numpy as np
 
 
 def load_batches(in_dir, batch_range, file_template='batch%d_out.csv'):
+    '''
+    Load multiple batches as data frames and concatenate them into a single data frame.
+    Errors are handled gracefully: messages are printed for each data frame that fails.
+    '''
     file_paths = [os.path.join(in_dir, file_template % batch_idx)
                   for batch_idx in range(batch_range[0], batch_range[1])]
 
