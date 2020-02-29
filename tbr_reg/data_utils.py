@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pandas as pd
 import numpy as np
@@ -7,7 +8,17 @@ import numpy as np
 def load_batches(in_dir, batch_range, file_template='batch%d_out.csv'):
     file_paths = [os.path.join(in_dir, file_template % batch_idx)
                   for batch_idx in range(batch_range[0], batch_range[1])]
-    return pd.concat([pd.read_csv(file_path) for file_path in file_paths])
+
+    def graceful_load(path):
+        try:
+            return pd.read_csv(path)
+        except:
+            print('Skipping %s due to error: %s' %
+                  (path, str(sys.exc_info()[0])))
+            return None
+
+    loaded_frames = [graceful_load(file_path) for file_path in file_paths]
+    return pd.concat([frame for frame in loaded_frames if frame is not None])
 
 
 def encode_data_frame(df, domain):
