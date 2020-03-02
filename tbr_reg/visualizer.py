@@ -1,5 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -7,7 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter
+from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter, Samplerun
 
 import random
 
@@ -87,6 +88,10 @@ class Window(QDialog):
         self.y_granularity = None
 
         self.tbr_params = None
+        self.tbr_true = None
+
+        self.tbr_worker = None
+        self.tbr_worker_thread = None
 
         self.init_layout()
 
@@ -117,6 +122,10 @@ class Window(QDialog):
         self.sample_button = QPushButton('Sample values')
         self.sample_button.clicked.connect(self.perform_sample)
         layout.addWidget(self.sample_button, 5, 1)
+
+        self.query_tbr_button = QPushButton('Query true TBR')
+        self.query_tbr_button.clicked.connect(self.query_tbr)
+        layout.addWidget(self.query_tbr_button, 6, 1)
 
         self.setLayout(layout)
 
@@ -166,11 +175,68 @@ class Window(QDialog):
             [x_linspace] * self.y_granularity].ravel('C')
         df[self.y_param_name] = np.c_[
             [y_linspace] * self.x_granularity].ravel('F')
-        self.tbr_params = df
+        self.tbr_params = df.reset_index()
+
+        self.tbr_true = None
 
         self.plot_model()
         self.plot_true()
         self.plot_err()
+
+    def query_tbr(self):
+        if self.tbr_params is None:
+            print('ERROR: TBR queried with no sampled parameters')
+            return
+
+        self.query_tbr_button.setEnabled(False)
+
+        class Worker(QObject):
+            finished = pyqtSignal()
+            samples_available = pyqtSignal(pd.DataFrame)
+
+            def __init__(self, tbr_params, x_param_name, y_param_name, parent=None):
+                super(Worker, self).__init__(parent)
+                self.tbr_params = tbr_params
+                self.x_param_name = x_param_name
+                self.y_param_name = y_param_name
+
+            @pyqtSlot()
+            def query_tbr(self):
+                run = Samplerun(no_docker=True)
+                sampled = run.perform_sample(out_file=None,
+                                             param_values=self.tbr_params)
+                param_names = [self.x_param_name, self.y_param_name]
+                sampled = pd.merge(self.tbr_params, sampled,  how='left',
+                                   left_on=param_names, right_on=param_names, suffixes=('', '_dup_'))
+                sampled.drop([column for column in sampled.columns
+                              if column.endswith('_dup_')], axis=1, inplace=True)
+                self.samples_available.emit(sampled)
+
+                self.finished.emit()
+
+        self.tbr_worker = Worker(
+            self.tbr_params, self.x_param_name, self.y_param_name)
+        self.tbr_worker_thread = QThread()
+
+        self.tbr_worker.moveToThread(self.tbr_worker_thread)
+        self.tbr_worker.finished.connect(self.tbr_worker_thread.quit)
+        self.tbr_worker.samples_available.connect(
+            self.tbr_worker_samples_available)
+        self.tbr_worker_thread.started.connect(self.tbr_worker.query_tbr)
+        self.tbr_worker_thread.finished.connect(self.tbr_worker_finished)
+
+        self.tbr_worker_thread.start()
+
+    def tbr_worker_samples_available(self, sampled):
+        self.tbr_true = sampled
+
+        self.plot_true()
+        self.plot_err()
+
+    def tbr_worker_finished(self):
+        del self.tbr_worker
+        del self.tbr_worker_thread
+        self.query_tbr_button.setEnabled(True)
 
     def plot_domain(self, fig, canv, z_data, z_label, symmetrical=True):
         fig.clear()
@@ -185,10 +251,20 @@ class Window(QDialog):
             self.y_granularity, self.x_granularity)
 
         pl1 = None
+        vmin, vmax = None, None
         if z_data is not None:
+            vmin, vmax = np.min(z_data), np.max(z_data)
+
+            if symmetrical:
+                if np.abs(vmin - 1) > np.abs(vmax - 1):
+                    vmax = 1 + np.abs(vmin - 1)
+                else:
+                    vmin = 1 - np.abs(vmax - 1)
+                print(vmin, vmax)
+
             z_data = z_data.reshape(self.y_granularity, self.x_granularity)
             pl1 = ax1.contourf(x_data, y_data, z_data,
-                               cmap=cmap)
+                               cmap=cmap, vmin=vmin, vmax=vmax)
 
         ax1.scatter(x_data, y_data, marker='o', c='k',
                     s=12, linewidths=0.8, edgecolors='w')
@@ -198,9 +274,10 @@ class Window(QDialog):
                               if param.name == self.y_param_name]))
 
         if pl1 is not None:
+            n_steps = 12
             cb1 = fig.colorbar(pl1, orientation='vertical',
-                               label=z_label, ax=ax1)
-            # cb1.ax.locator_params(nbins=5)
+                               label=z_label, ax=ax1, boundaries=np.linspace(vmin, vmax, n_steps))
+            cb1.ax.locator_params(nbins=n_steps)
 
         canv.draw()
 
@@ -208,13 +285,15 @@ class Window(QDialog):
         random_data = np.random.rand(
             self.x_granularity * self.y_granularity, 1) * 2
         self.plot_domain(self.model_fig, self.model_canv,
-                         random_data, 'Model TBR')
+                         random_data, 'Surrogate TBR')
 
     def plot_true(self):
-        random_data = np.random.rand(
-            self.x_granularity * self.y_granularity, 1) * 2
+        true_data = self.tbr_true['tbr'].to_numpy() \
+            if self.tbr_true is not None else None
+        print(true_data)
+        print(self.tbr_true)
         self.plot_domain(self.true_fig, self.true_canv,
-                         random_data, 'True TBR')
+                         true_data, 'True TBR')
 
     def plot_err(self):
         random_data = np.random.rand(
