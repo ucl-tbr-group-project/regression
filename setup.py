@@ -5,5 +5,5 @@ setup(
     version='1.0.0',
     author='Petr Mánek, Graham Van Goffrier',
     packages=find_packages(exclude=['*tests']),
-    install_requires=['numpy', 'matplotlib', 'pandas', 'scikit-learn'],
+    install_requires=['numpy', 'matplotlib', 'pandas', 'scikit-learn', 'keras'],
 )
