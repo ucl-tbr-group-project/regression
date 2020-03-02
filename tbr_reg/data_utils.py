@@ -30,8 +30,8 @@ def encode_data_frame(df, domain):
     Encode data frame into format suitable for regression.
     This maps continuous columns with identity, and one-hot-encodes discrete columns.
     '''
-    one_hot = pd.get_dummies(df, drop_first=True)
     column_map = [param.transform_columns() for param in domain.params]
+    one_hot = pd.get_dummies(df)
     zero_columns = [column for columns in column_map for column in columns]
     for column in zero_columns:
         if column not in one_hot.columns:
