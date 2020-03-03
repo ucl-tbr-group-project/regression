@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit, QProgressBar
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import joblib
 
@@ -166,7 +166,10 @@ class Window(QDialog):
 
         self.query_tbr_button = QPushButton('Query true TBR')
         self.query_tbr_button.clicked.connect(self.query_tbr)
-        layout.addWidget(self.query_tbr_button, 5, 2)
+        layout.addWidget(self.query_tbr_button, 6, 1)
+
+        self.query_tbr_progress = QProgressBar()
+        layout.addWidget(self.query_tbr_progress, 6, 2, 1, 2)
 
         self.setLayout(layout)
 
@@ -247,9 +250,13 @@ class Window(QDialog):
             return
 
         self.query_tbr_button.setEnabled(False)
+        self.query_tbr_progress.setValue(0)
+        self.query_tbr_progress.setMinimum(0)
+        self.query_tbr_progress.setMaximum(self.tbr_params.shape[0])
 
         class Worker(QObject):
             finished = pyqtSignal()
+            progress = pyqtSignal(int, int)
             samples_available = pyqtSignal(pd.DataFrame)
 
             def __init__(self, tbr_params, x_param_name, y_param_name, parent=None):
@@ -258,11 +265,15 @@ class Window(QDialog):
                 self.x_param_name = x_param_name
                 self.y_param_name = y_param_name
 
+            def progress_handler(self, i, n_samples):
+                self.progress.emit(i, n_samples)
+
             @pyqtSlot()
             def query_tbr(self):
                 run = Samplerun(no_docker=True)
                 sampled = run.perform_sample(out_file=None,
-                                             param_values=self.tbr_params)
+                                             param_values=self.tbr_params,
+                                             progress_handler=self.progress_handler)
 
                 param_names = [self.x_param_name, self.y_param_name]
                 sampled = pd.merge(self.tbr_params, sampled,  how='left',
@@ -281,11 +292,17 @@ class Window(QDialog):
         self.tbr_worker.finished.connect(self.tbr_worker_thread.quit)
         self.tbr_worker.samples_available.connect(
             self.tbr_worker_samples_available)
+        self.tbr_worker.progress.connect(self.tbr_worker_progress)
         self.tbr_worker_thread.started.connect(self.tbr_worker.query_tbr)
         self.tbr_worker_thread.finished.connect(self.tbr_worker_finished)
 
         self.tbr_worker_thread.start()
 
+    @pyqtSlot(int, int)
+    def tbr_worker_progress(self, i, n_samples):
+        self.query_tbr_progress.setValue(i + 1)
+
+    @pyqtSlot(pd.DataFrame)
     def tbr_worker_samples_available(self, sampled):
         self.tbr_true = sampled
         self.plot_true()
@@ -304,6 +321,7 @@ class Window(QDialog):
         self.tbr_err = err
         self.plot_err()
 
+    @pyqtSlot()
     def tbr_worker_finished(self):
         del self.tbr_worker
         del self.tbr_worker_thread
