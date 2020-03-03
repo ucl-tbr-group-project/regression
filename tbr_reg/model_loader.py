@@ -3,12 +3,18 @@ import os
 
 def get_model_factory():
     '''Get dictionary with model names and initializers.'''
+
     def init_nn(args):
         from models.nn import NeuralNetworkModel
         return NeuralNetworkModel(**NeuralNetworkModel.parse_cli_args(args))
 
+    def init_svm(args):
+        from models.svm import SupportVectorModel
+        return SupportVectorModel(**SupportVectorModel.parse_cli_args(args))
+
     return {
-        'nn': init_nn
+        'nn': init_nn,
+        'svm': init_svm
     }
 
 
