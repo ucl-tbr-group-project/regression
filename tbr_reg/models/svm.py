@@ -20,7 +20,7 @@ class SupportVectorModel(RegressionModel):
         RegressionModel.__init__(self, 'SVM')
 
         if out is not None:
-            out_model_file = '%s.svm.h5' % out
+            out_model_file = '%s.svm.pkl' % out
             out_scaler_file = '%s.scaler.pkl' % out
 
         self.scaling = scaling

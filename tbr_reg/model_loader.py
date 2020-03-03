@@ -36,9 +36,16 @@ def load_model_from_file(filename):
             arch='%s.arch.yml' % fname_without_util,
             scaler='%s.scaler.pkl' % fname_without_util)
 
+    def load_svm(fname):
+        from models.svm import SupportVectorModel
+        return SupportVectorModel.load(
+            '%s.svm.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
-        '.nncp.h5': load_nn_cp_arch
+        '.nncp.h5': load_nn_cp_arch,
+        '.svm.pkl': load_svm
     }
 
     loaded_model_name, loaded_model = None, None
