@@ -90,6 +90,18 @@ class ParamWidget(QTableWidget):
         row_idx = self.param_to_row[param_name]
         self.setItem(row_idx, 2, QTableWidgetItem(str(param_value)))
 
+    def get_params(self):
+        def graceful_float_conversion(value):
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
+        return {
+            param_name: graceful_float_conversion(self.item(row_idx, 2).text())
+            for row_idx, param_name in enumerate(self.row_to_param)
+        }
+
     def find_param_with_selection(self, selection):
         for row_idx in range(self.rowCount()):
             if self.item(row_idx, 1).text() == selection:
@@ -144,9 +156,13 @@ class Window(QDialog):
         self.y_granularity_box = QLineEdit('5')
         layout.addWidget(self.y_granularity_box, 4, 2)
 
-        self.sample_button = QPushButton('Sample values')
-        self.sample_button.clicked.connect(self.perform_sample)
-        layout.addWidget(self.sample_button, 5, 1)
+        self.randomize_button = QPushButton('Randomize params')
+        self.randomize_button.clicked.connect(self.randomize_params)
+        layout.addWidget(self.randomize_button, 5, 1)
+
+        self.generate_button = QPushButton('Generate lattice')
+        self.generate_button.clicked.connect(self.generate_lattice)
+        layout.addWidget(self.generate_button, 5, 2)
 
         self.query_tbr_button = QPushButton('Query true TBR')
         self.query_tbr_button.clicked.connect(self.query_tbr)
@@ -160,12 +176,15 @@ class Window(QDialog):
         toolbar = NavigationToolbar(canvas, self)
         return figure, canvas, toolbar
 
-    def perform_sample(self):
+    def randomize_params(self):
         sampling_strategy = UniformSamplingStrategy()
-
         df = self.domain.gen_data_frame(sampling_strategy, 1)
         for column in df.columns:
             self.param_table.set_param(column, df.at[0, column])
+
+    def generate_lattice(self):
+        df = pd.DataFrame(
+            data={key: [value] for key, value in self.param_table.get_params().items()})
 
         self.x_granularity = int(self.x_granularity_box.text())
         self.x_param_name = self.param_table.find_param_with_selection('x')
