@@ -7,4 +7,8 @@ setup(
     packages=find_packages(exclude=['*tests']),
     install_requires=['numpy', 'matplotlib',
                       'pandas', 'scikit-learn', 'keras', 'pyqt5', 'joblib'],
+    entry_points={
+        'console_scripts': [
+            'tbr_train = tbr_reg.run_training:main'
+        ]}
 )
