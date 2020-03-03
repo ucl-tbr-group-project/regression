@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras import Sequential
 from keras.layers import Dense
 from keras.callbacks import ModelCheckpoint
+from keras.models import load_model, model_from_yaml
 
 from models.basic_model import RegressionModel
 
@@ -51,6 +52,25 @@ class NeuralNetworkModel(RegressionModel):
             self.scaler = None
         else:
             raise ValueError('Unknown scaler.')
+
+    @staticmethod
+    def load(model=None, arch=None, weights=None, scaler=None):
+        loaded = NeuralNetworkModel()
+
+        if scaler is not None:
+            loaded.scaler = joblib.load(scaler)
+
+        if model is not None:
+            loaded.net = load_model(model)
+        elif arch is not None and weights is not None:
+            with open(arch, 'r') as f:
+                yaml_string = f.read()
+            loaded.net = model_from_yaml(yaml_string)
+            loaded.net.load_weights(weights)
+        else:
+            raise ValueError('Model or (weights, arch) required')
+
+        return loaded
 
     @staticmethod
     def parse_cli_args(args):
@@ -137,7 +157,11 @@ class NeuralNetworkModel(RegressionModel):
             plt.savefig('%s.pdf' % self.out_loss_plot_file)
 
     def evaluate(self, X_test, y_test):
+        if self.scaler is not None:
+            X_test = self.scaler.transform(X_test)
         return self.net.evaluate(X_test, y_test, batch_size=self.batch_size)
 
     def predict(self, X):
+        if self.scaler is not None:
+            X = self.scaler.transform(X)
         return self.net.predict(X, batch_size=self.batch_size)

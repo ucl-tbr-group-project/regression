@@ -12,33 +12,12 @@ import numpy as np
 
 from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter, Samplerun
 from data_utils import encode_data_frame
-from keras.models import load_model
 
 import random
 
 
 def first(lst, default=None):
     return lst[0] if len(lst) == 1 else default
-
-
-class Model:
-    def __init__(self, in_filename):
-        self.in_filename = in_filename
-        self.scaler = joblib.load('%s.scaler.pkl' % in_filename)
-        self.network = load_model('%s.nn.h5' % in_filename)
-        self.network.summary()
-
-    def evaluate(self, params, domain):
-        # preprocess data
-        X = encode_data_frame(params, domain)
-        X = X.sort_index(axis=1)
-        X = self.scaler.transform(X)
-
-        # make predictions
-        df = params.copy()
-        df.insert(0, 'tbr_pred', -1.)
-        df['tbr_pred'] = self.network.predict(X)
-        return df
 
 
 class ParamWidget(QTableWidget):
@@ -186,15 +165,19 @@ class Window(QDialog):
 
     def load_model(self):
         filename, _ = QFileDialog.getOpenFileName(
-            self, 'Load model', None, 'Keras models (*.nn.h5)')
+            self, 'Load model', None, 'Network models (*.nn.h5)')
 
-        keras_suffix = '.nn.h5'
+        nn_suffix = '.nn.h5'
         loaded_model = None
 
-        if filename.endswith(keras_suffix):
-            filename = filename[:-len(keras_suffix)]
+        if filename.endswith(nn_suffix):
+            filename = filename[:-len(nn_suffix)]
             loaded_model = os.path.basename(filename)
-            self.surrogate_model = Model(filename)
+
+            from models.nn import NeuralNetworkModel
+            self.surrogate_model = NeuralNetworkModel.load(
+                model='%s.nn.h5' % filename,
+                scaler='%s.scaler.pkl' % filename)
 
         self.load_model_button.setText('Model: %s' % loaded_model)
         self.evaluate_model()
@@ -262,8 +245,14 @@ class Window(QDialog):
             self.tbr_surrogate = None
             return
 
-        self.tbr_surrogate = self.surrogate_model.evaluate(
-            self.tbr_params, self.domain)
+        # preprocess data
+        X = encode_data_frame(self.tbr_params, self.domain)
+        X = X.sort_index(axis=1)
+
+        # make predictions
+        self.tbr_surrogate = self.tbr_params.copy()
+        self.tbr_surrogate.insert(0, 'tbr_pred', -1.)
+        self.tbr_surrogate['tbr_pred'] = self.surrogate_model.predict(X)
 
     def query_tbr(self):
         if self.tbr_params is None:
