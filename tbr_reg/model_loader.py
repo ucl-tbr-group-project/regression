@@ -18,8 +18,18 @@ def load_model_from_file(filename):
             model='%s.nn.h5' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_nn_cp_arch(fname):
+        from models.nn import NeuralNetworkModel
+        fname_without_util = os.path.join(os.path.dirname(
+            fname), os.path.basename(fname).split('.')[0])
+        return NeuralNetworkModel.load(
+            weights='%s.nncp.h5' % fname,
+            arch='%s.arch.yml' % fname_without_util,
+            scaler='%s.scaler.pkl' % fname_without_util)
+
     suffix_to_loader = {
-        '.nn.h5': load_nn_full
+        '.nn.h5': load_nn_full,
+        '.nncp.h5': load_nn_cp_arch
     }
 
     loaded_model_name, loaded_model = None, None

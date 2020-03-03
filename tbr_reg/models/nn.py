@@ -28,7 +28,7 @@ class NeuralNetworkModel(RegressionModel):
             out_loss_plot_file = '%s.loss' % out
             out_model_file = '%s.nn.h5' % out
             out_scaler_file = '%s.scaler.pkl' % out
-            out_checkpoint_file = '%s.weights_{epoch:03d}_{val_loss:.5f}.h5' % out
+            out_checkpoint_file = '%s.{epoch:03d}_{val_loss:.5f}.nncp.h5' % out
             out_arch_file = '%s.arch.yml' % out
 
         self.epochs = epochs
