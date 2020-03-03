@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+import joblib
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -9,12 +10,34 @@ import pandas as pd
 import numpy as np
 
 from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter, Samplerun
+from data_utils import encode_data_frame
+from keras.models import load_model
 
 import random
 
 
 def first(lst, default=None):
     return lst[0] if len(lst) == 1 else default
+
+
+class Model:
+    def __init__(self, in_filename):
+        self.in_filename = in_filename
+        self.scaler = joblib.load('%s.scaler.pkl' % in_filename)
+        self.network = load_model('%s.model.h5' % in_filename)
+        self.network.summary()
+
+    def evaluate(self, params, domain):
+        # preprocess data
+        X = encode_data_frame(params, domain)
+        X = X.sort_index(axis=1)
+        X = self.scaler.transform(X)
+
+        # make predictions
+        df = params.copy()
+        df.insert(0, 'tbr_pred', -1.)
+        df['tbr_pred'] = self.network.predict(X)
+        return df
 
 
 class ParamWidget(QTableWidget):
@@ -56,8 +79,8 @@ class ParamWidget(QTableWidget):
                 self.row_to_param[param_idx] = name
                 param_idx += 1
 
-        self.setItem(0, 1, QTableWidgetItem('x'))
-        self.setItem(1, 1, QTableWidgetItem('y'))
+        self.setItem(9, 1, QTableWidgetItem('x'))
+        self.setItem(10, 1, QTableWidgetItem('y'))
 
     def set_param(self, param_name, param_value):
         if param_name not in self.param_to_row:
@@ -78,6 +101,7 @@ class Window(QDialog):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
         self.domain = Domain()
+        self.surrogate_model = Model('outputs/model')
 
         self.x_param = None
         self.x_param_name = None
@@ -176,7 +200,7 @@ class Window(QDialog):
             [x_linspace] * self.y_granularity].ravel('C')
         df[self.y_param_name] = np.c_[
             [y_linspace] * self.x_granularity].ravel('F')
-        self.tbr_params = df.reset_index()
+        self.tbr_params = df.reset_index(drop=True)
 
         self.tbr_true = None
         self.tbr_err = None
@@ -189,11 +213,12 @@ class Window(QDialog):
         self.plot_err()
 
     def evaluate_model(self):
-        # TODO: evaluate real model
-        self.tbr_surrogate = self.tbr_params.copy()
-        self.tbr_surrogate.insert(0, 'tbr_pred', -1.)
-        self.tbr_surrogate['tbr_pred'] = np.random.rand(
-            self.x_granularity * self.y_granularity, 1) * 2
+        if self.tbr_params is None:
+            self.tbr_surrogate = None
+            return
+
+        self.tbr_surrogate = self.surrogate_model.evaluate(
+            self.tbr_params, self.domain)
 
     def query_tbr(self):
         if self.tbr_params is None:
