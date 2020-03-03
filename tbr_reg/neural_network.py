@@ -39,6 +39,8 @@ class NeuralNetwork:
                             help='keras batch size')
         parser.add_argument('--scaling', type=str,
                             help='how to scale data before training')
+        parser.add_argument('--out', type=str,
+                            help='where to save all outputs')
         parser.add_argument('--out-loss-plot-file', type=str,
                             help='where to save loss plot')
         parser.add_argument('--out-model-file', type=str,
@@ -59,12 +61,19 @@ class NeuralNetwork:
               batch_size=1024,  # (1, n_samples)
               scaling='standard',  # standard|minmax|none
               validation_split=0.25,  # (0,1)
-              out_loss_plot_file=None,  # "model.loss.{pdf|png}"
-              out_model_file=None,  # "model.keras.h5"
-              out_scaler_file=None,  # "model.scaler.pkl"
-              # "model.weights_{epoch:03d}_{val_loss:.5f}.h5"
+              out=None,  # overrides all below
+              out_loss_plot_file=None,
+              out_model_file=None,
+              out_scaler_file=None,
               out_checkpoint_file=None,
-              out_arch_file=None):  # model.arch.yml
+              out_arch_file=None):
+        if out is not None:
+            out_loss_plot_file = '%s.loss' % out
+            out_model_file = '%s.nn.h5' % out
+            out_scaler_file = '%s.scaler.pkl' % out
+            out_checkpoint_file = '%s.weights_{epoch:03d}_{val_loss:.5f}.h5' % out
+            out_arch_file = '%s.arch.yml' % out
+
         if scaling == 'standard':
             scaler = StandardScaler()
         elif scaling == 'minmax':
