@@ -25,7 +25,7 @@ class Model:
     def __init__(self, in_filename):
         self.in_filename = in_filename
         self.scaler = joblib.load('%s.scaler.pkl' % in_filename)
-        self.network = load_model('%s.keras.h5' % in_filename)
+        self.network = load_model('%s.nn.h5' % in_filename)
         self.network.summary()
 
     def evaluate(self, params, domain):
@@ -186,9 +186,9 @@ class Window(QDialog):
 
     def load_model(self):
         filename, _ = QFileDialog.getOpenFileName(
-            self, 'Load model', None, 'Keras models (*.h5)')
+            self, 'Load model', None, 'Keras models (*.nn.h5)')
 
-        keras_suffix = '.keras.h5'
+        keras_suffix = '.nn.h5'
         loaded_model = None
 
         if filename.endswith(keras_suffix):
