@@ -9,6 +9,21 @@ Usage
 
 The repository provides the `tbr_reg` Python package. Use `pip` to install it on your system.
 
+When installed, the package exposes the `tbr_train` command line endpoint. See `run_training.py` for the implementation.
+Common usage is as follows:
+
+```
+tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <optional arguments...>
+```
+
+where:
+
+ - `model` is one of the supported models, see `model_loader.py` for details,
+ - `data_dir` is path to directory containing CSV batch files,
+ - `batch_start` and `batch_end` is range of batch file indices to use,
+ - `test_fraction` is 0-1 fraction determining the size of the test set (set to 0 to disable testing),
+ - and `optional arguments` depend on the chosen model, see the contents of the `models/` directory for details.
+
 
 License
 -------
