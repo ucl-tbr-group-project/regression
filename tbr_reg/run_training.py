@@ -4,16 +4,7 @@ from sklearn.model_selection import train_test_split
 
 import ATE
 from data_utils import load_batches, encode_data_frame, x_y_split
-
-
-def get_model_factory():
-    def init_nn(args):
-        from models.nn import NeuralNetworkModel
-        return NeuralNetworkModel(**NeuralNetworkModel.parse_cli_args(args))
-
-    return {
-        'nn': init_nn
-    }
+from model_loader import get_model_factory
 
 
 def main():
