@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit, QProgressBar
+import os
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QGridLayout, QTableWidget, QTableWidgetItem, QLineEdit, QProgressBar, QFileDialog
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import joblib
 
@@ -24,7 +25,7 @@ class Model:
     def __init__(self, in_filename):
         self.in_filename = in_filename
         self.scaler = joblib.load('%s.scaler.pkl' % in_filename)
-        self.network = load_model('%s.model.h5' % in_filename)
+        self.network = load_model('%s.keras.h5' % in_filename)
         self.network.summary()
 
     def evaluate(self, params, domain):
@@ -113,7 +114,7 @@ class Window(QDialog):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
         self.domain = Domain()
-        self.surrogate_model = Model('outputs/model')
+        self.surrogate_model = None
 
         self.x_param = None
         self.x_param_name = None
@@ -164,6 +165,10 @@ class Window(QDialog):
         self.randomize_button.clicked.connect(self.randomize_params)
         layout.addWidget(self.randomize_button, 5, 1)
 
+        self.load_model_button = QPushButton('Model: None')
+        self.load_model_button.clicked.connect(self.load_model)
+        layout.addWidget(self.load_model_button, 5, 2)
+
         self.query_tbr_button = QPushButton('Query true TBR')
         self.query_tbr_button.clicked.connect(self.query_tbr)
         layout.addWidget(self.query_tbr_button, 6, 1)
@@ -178,6 +183,22 @@ class Window(QDialog):
         canvas = FigureCanvas(figure)
         toolbar = NavigationToolbar(canvas, self)
         return figure, canvas, toolbar
+
+    def load_model(self):
+        filename, _ = QFileDialog.getOpenFileName(
+            self, 'Load model', None, 'Keras models (*.h5)')
+
+        keras_suffix = '.keras.h5'
+        loaded_model = None
+
+        if filename.endswith(keras_suffix):
+            filename = filename[:-len(keras_suffix)]
+            loaded_model = os.path.basename(filename)
+            self.surrogate_model = Model(filename)
+
+        self.load_model_button.setText('Model: %s' % loaded_model)
+        self.evaluate_model()
+        self.plot_model()
 
     def randomize_params(self):
         sampling_strategy = UniformSamplingStrategy()
@@ -237,7 +258,7 @@ class Window(QDialog):
         self.plot_err()
 
     def evaluate_model(self):
-        if self.tbr_params is None:
+        if self.tbr_params is None or self.surrogate_model is None:
             self.tbr_surrogate = None
             return
 
@@ -329,6 +350,9 @@ class Window(QDialog):
 
     def plot_domain(self, fig, canv, z_data, z_label, symmetrical=True):
         fig.clear()
+        if self.tbr_params is None:
+            return
+
         fig.set_tight_layout(True)
         ax1 = fig.add_subplot(111)
 
