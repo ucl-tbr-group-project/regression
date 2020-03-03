@@ -72,7 +72,7 @@ class ParamWidget(QTableWidget):
             for name, human_readable_name in rows:
                 self.setItem(param_idx, 0, QTableWidgetItem(
                     human_readable_name))
-                self.setItem(param_idx, 1, QTableWidgetItem('sample'))
+                self.setItem(param_idx, 1, QTableWidgetItem('r'))
                 self.setItem(param_idx, 2, QTableWidgetItem(''))
 
                 self.param_to_row[name] = param_idx
@@ -181,6 +181,8 @@ class Window(QDialog):
         df = self.domain.gen_data_frame(sampling_strategy, 1)
         for column in df.columns:
             self.param_table.set_param(column, df.at[0, column])
+
+        self.generate_lattice()
 
     def generate_lattice(self):
         df = pd.DataFrame(
