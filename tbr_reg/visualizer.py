@@ -12,6 +12,7 @@ import numpy as np
 
 from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter, Samplerun
 from data_utils import encode_data_frame
+from model_loader import load_model_from_file
 
 import random
 
@@ -165,21 +166,15 @@ class Window(QDialog):
 
     def load_model(self):
         filename, _ = QFileDialog.getOpenFileName(
-            self, 'Load model', None, 'Network models (*.nn.h5)')
+            self, 'Load model', None, None)
+        loaded_model_name, loaded_model = load_model_from_file(filename)
 
-        nn_suffix = '.nn.h5'
-        loaded_model = None
+        if loaded_model is None:
+            return
 
-        if filename.endswith(nn_suffix):
-            filename = filename[:-len(nn_suffix)]
-            loaded_model = os.path.basename(filename)
+        self.surrogate_model = loaded_model
+        self.load_model_button.setText('Model: %s' % loaded_model_name)
 
-            from models.nn import NeuralNetworkModel
-            self.surrogate_model = NeuralNetworkModel.load(
-                model='%s.nn.h5' % filename,
-                scaler='%s.scaler.pkl' % filename)
-
-        self.load_model_button.setText('Model: %s' % loaded_model)
         self.evaluate_model()
         self.plot_model()
 
