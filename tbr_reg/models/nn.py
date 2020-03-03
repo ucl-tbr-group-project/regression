@@ -11,6 +11,8 @@ from models.basic_model import RegressionModel
 
 
 class NeuralNetworkModel(RegressionModel):
+    '''A feed-forward multi-layer neural network implemented with Keras.'''
+
     def __init__(self,
                  epochs=50,  # arbitrary
                  batch_size=1024,  # (1, n_samples)

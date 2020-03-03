@@ -2,6 +2,7 @@ import os
 
 
 def get_model_factory():
+    '''Get dictionary with model names and initializers.'''
     def init_nn(args):
         from models.nn import NeuralNetworkModel
         return NeuralNetworkModel(**NeuralNetworkModel.parse_cli_args(args))
@@ -12,6 +13,8 @@ def get_model_factory():
 
 
 def load_model_from_file(filename):
+    '''Instantiate a trained model from a file previously created using .save().'''
+
     def load_nn_full(fname):
         from models.nn import NeuralNetworkModel
         return NeuralNetworkModel.load(

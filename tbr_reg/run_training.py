@@ -8,6 +8,8 @@ from model_loader import get_model_factory
 
 
 def main():
+    '''Main command line entry point. Trains model with given parameters.'''
+
     # parse args
     parser = argparse.ArgumentParser(description='Train TBR model')
     parser.add_argument('type', type=str,
