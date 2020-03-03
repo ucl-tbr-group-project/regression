@@ -144,11 +144,11 @@ class Window(QDialog):
         layout.addWidget(self.err_canv, 3, 0, 3, 1)
 
         self.true_fig, self.true_canv, self.true_tool = self.init_fig()
-        layout.addWidget(self.true_tool, 0, 1, 1, 2)
-        layout.addWidget(self.true_canv, 1, 1, 1, 2)
+        layout.addWidget(self.true_tool, 0, 1, 1, 3)
+        layout.addWidget(self.true_canv, 1, 1, 1, 3)
 
         self.param_table = ParamWidget(self.domain)
-        layout.addWidget(self.param_table, 2, 1, 2, 2)
+        layout.addWidget(self.param_table, 2, 1, 2, 3)
 
         self.x_granularity_box = QLineEdit('5')
         layout.addWidget(self.x_granularity_box, 4, 1)
@@ -156,17 +156,17 @@ class Window(QDialog):
         self.y_granularity_box = QLineEdit('5')
         layout.addWidget(self.y_granularity_box, 4, 2)
 
+        self.generate_button = QPushButton('Generate lattice')
+        self.generate_button.clicked.connect(self.generate_lattice)
+        layout.addWidget(self.generate_button, 4, 3)
+
         self.randomize_button = QPushButton('Randomize params')
         self.randomize_button.clicked.connect(self.randomize_params)
         layout.addWidget(self.randomize_button, 5, 1)
 
-        self.generate_button = QPushButton('Generate lattice')
-        self.generate_button.clicked.connect(self.generate_lattice)
-        layout.addWidget(self.generate_button, 5, 2)
-
         self.query_tbr_button = QPushButton('Query true TBR')
         self.query_tbr_button.clicked.connect(self.query_tbr)
-        layout.addWidget(self.query_tbr_button, 6, 1)
+        layout.addWidget(self.query_tbr_button, 5, 2)
 
         self.setLayout(layout)
 
