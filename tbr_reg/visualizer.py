@@ -141,7 +141,7 @@ class Window(QDialog):
 
         self.err_fig, self.err_canv, self.err_tool = self.init_fig()
         layout.addWidget(self.err_tool, 2, 0)
-        layout.addWidget(self.err_canv, 3, 0, 3, 1)
+        layout.addWidget(self.err_canv, 3, 0, 4, 1)
 
         self.true_fig, self.true_canv, self.true_tool = self.init_fig()
         layout.addWidget(self.true_tool, 0, 1, 1, 3)
