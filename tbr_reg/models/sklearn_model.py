@@ -10,6 +10,7 @@ class SKLearnModel(RegressionModel):
 
     def __init__(self,
                  name,
+                 extension,
                  scaling='standard',  # standard|minmax|none
                  out=None,  # overrides all below
                  out_model_file=None,
@@ -18,7 +19,7 @@ class SKLearnModel(RegressionModel):
         RegressionModel.__init__(self, name, scaling=scaling)
 
         if out is not None:
-            out_model_file = '%s.svm.pkl' % out
+            out_model_file = '%s.%s.pkl' % (out, extension)
             out_scaler_file = '%s.scaler.pkl' % out
 
         self.out_scaler_file = out_scaler_file
