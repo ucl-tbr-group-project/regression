@@ -1,4 +1,3 @@
-import joblib
 from sklearn.linear_model import Ridge
 
 from models.sklearn_poly_model import SKLearnPolyModel
@@ -27,7 +26,7 @@ class RidgeModel(SKLearnPolyModel):
     @staticmethod
     def parse_cli_args(args):
         parser = SKLearnPolyModel.create_cli_parser(
-            'Train support vector machine')
+            'Train ridge regression model with polynomial features')
 
         return {key: value
                 for key, value in vars(parser.parse_args(args)).items()
