@@ -125,8 +125,11 @@ class NeuralNetworkModel(RegressionModel):
             callbacks_list.append(checkpoint)
 
         # train model
-        history = self.net.fit(X_train, y_train, epochs=self.epochs,
-                               batch_size=self.batch_size, validation_split=self.validation_split,
+        history = self.net.fit(X_train, y_train,
+                               epochs=self.epochs,
+                               batch_size=self.batch_size,
+                               validation_split=self.validation_split,
+                               shuffle=True,
                                callbacks=callbacks_list)
 
         # save trained model
