@@ -9,10 +9,12 @@ Usage
 
 The repository provides the `tbr_reg` Python package. Use `pip` to install it on your system.
 
-When installed, the package exposes the `tbr_train` command line endpoint. See `run_training.py` for the implementation.
-Common usage is as follows:
+### Training & evaluating models
 
-```
+The package exposes the `tbr_train` command line endpoint to enable quick model training and evaluation.
+See [the implementation](./tbr_reg/run_training.py) for details. Common usage is as follows:
+
+```bash
 tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <optional arguments...>
 ```
 
@@ -24,6 +26,15 @@ where:
  - `test_fraction` is 0-1 fraction determining the size of the test set (set to 0 to disable testing),
  - and `optional arguments` depend on the chosen model, see the contents of the `models/` directory for details.
 
+
+### Visualizing models
+
+The package exposes the `tbr_visualizer` GUI endpoint to enable model inspection and visualization.
+See [the implementation](./tbr_reg/visualizer.py) for details. Common usage is as follows:
+
+```bash
+tbr_visualizer
+```
 
 License
 -------
