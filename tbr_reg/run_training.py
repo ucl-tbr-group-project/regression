@@ -38,12 +38,16 @@ def main():
         X_train, y_train = X, y['tbr']
         X_test, y_test = None, None
 
+    print(f'Training regressor on set of size {X_train.shape[0]}')
     model.train(X_train, y_train)
 
     if X_test is not None:
+        print(f'Testing regressor on set of size {X_test.shape[0]}')
         evaluation = model.evaluate(X_test, y_test)
         print(
             f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
+
+    print('Done.')
 
 
 if __name__ == '__main__':
