@@ -9,13 +9,12 @@ class SKLearnPolyModel(SKLearnModel):
     '''Base class for all dimension-lifted SciKit models.'''
 
     def __init__(self,
-                 name, extension
+                 name, extension,
                  degree=3,
                  scaling='standard',  # standard|minmax|none
                  out=None,  # overrides all below
                  out_model_file=None,
-                 out_scaler_file=None
-                 ):
+                 out_scaler_file=None):
         SKLearnModel.__init__(self, name, extension,
                               scaling=scaling,
                               out=out,
@@ -29,10 +28,10 @@ class SKLearnPolyModel(SKLearnModel):
     def create_cli_parser(description):
         parser = SKLearnModel.create_cli_parser(description)
         parser.add_argument('--degree', type=int,
-                            help='degree of polynomial features'))
+                            help='degree of polynomial features')
         return parser
 
     def train(self, X_train, y_train):
-        self.sklearn_model=Pipeline([('poly', PolynomialFeatures(degree=self.degree)),
-                                     ('linear', self.sklearn_linear_model)])
-        super(SupportVectorModel, self).train(X_train, y_train)
+        self.sklearn_model = Pipeline([('poly', PolynomialFeatures(degree=self.degree)),
+                                       ('linear', self.sklearn_linear_model)])
+        super(SKLearnPolyModel, self).train(X_train, y_train)
