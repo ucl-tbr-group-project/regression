@@ -8,6 +8,7 @@ class RidgeModel(SKLearnPolyModel):
     '''Ridge regression with polynomial features, implemented by SciKit.'''
 
     def __init__(self,
+                 degree=3,
                  scaling='standard',  # standard|minmax|none
                  out=None,  # overrides all below
                  out_model_file=None,
