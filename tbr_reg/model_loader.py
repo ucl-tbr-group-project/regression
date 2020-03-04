@@ -24,12 +24,17 @@ def get_model_factory():
         from models.kriging import KrigingModel
         return KrigingModel(**KrigingModel.parse_cli_args(args))
 
+    def init_rbf(args):
+        from models.rbf import RBFModel
+        return RBFModel(**RBFModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
         'knn': init_knn,
         'gpr': init_gpr,
-        'krg': init_krg
+        'krg': init_krg,
+        'rbf': init_rbf
     }
 
 
@@ -75,13 +80,20 @@ def load_model_from_file(filename):
             '%s.krg.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_rbf(fname):
+        from models.rbf import RBFModel
+        return RBFModel.load(
+            '%s.rbf.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
         '.svm.pkl': load_svm,
         '.knn.pkl': load_knn,
         '.gpr.pkl': load_gpr,
-        '.krg.pkl': load_krg
+        '.krg.pkl': load_krg,
+        '.rbf.pkl': load_rbf
     }
 
     loaded_model_name, loaded_model = None, None
