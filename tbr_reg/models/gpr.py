@@ -1,4 +1,3 @@
-import joblib
 from sklearn.gaussian_process import GaussianProcessRegressor
 
 from models.sklearn_model import SKLearnModel

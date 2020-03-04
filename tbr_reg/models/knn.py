@@ -1,4 +1,3 @@
-import joblib
 from sklearn.neighbors import KNeighborsRegressor
 
 from models.sklearn_model import SKLearnModel

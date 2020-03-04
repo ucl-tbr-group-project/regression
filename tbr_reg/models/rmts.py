@@ -1,4 +1,3 @@
-import joblib
 from smt.surrogate_models import RMTB, RMTC
 
 from models.smt_model import SMTModel

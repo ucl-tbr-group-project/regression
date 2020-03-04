@@ -1,4 +1,3 @@
-import joblib
 from sklearn.svm import SVR
 
 from models.sklearn_model import SKLearnModel
