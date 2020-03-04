@@ -10,5 +10,8 @@ setup(
     entry_points={
         'console_scripts': [
             'tbr_train = tbr_reg.run_training:main'
+        ]},
+        'gui_scripts': [
+            'tbr_visualizer = tbr_reg.visualizer:main'
         ]}
 )
