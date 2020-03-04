@@ -23,7 +23,10 @@ where:
  - `model` is one of the supported models, see `model_loader.py` for details,
  - `data_dir` is path to directory containing CSV batch files,
  - `batch_start` and `batch_end` is range of batch file indices to use,
- - `test_fraction` is 0-1 fraction determining the size of the test set (set to 0 to disable testing),
+ - `test_fraction` can be either:
+    - floating-point in the interval (0;1] determining the fractional size of the test set,
+    - 0 to disable testing (in that case entire input is used to train the model),
+    - a negative integer determining number of folds for cross-validation (e.g. `-5` yields 5-fold c.v.)
  - and `optional arguments` depend on the chosen model, see the contents of the `models/` directory for details.
 
 
