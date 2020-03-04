@@ -36,6 +36,10 @@ def get_model_factory():
         from models.rmts import RMTSModel
         return RMTSModel(**RMTSModel.parse_cli_args(args))
 
+    def init_ridge(args):
+        from models.ridge import RidgeModel
+        return RidgeModel(**RidgeModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
@@ -44,7 +48,8 @@ def get_model_factory():
         'krg': init_krg,
         'rbf': init_rbf,
         'idw': init_idw,
-        'rmts': init_rmts
+        'rmts': init_rmts,
+        'ridge': init_ridge
     }
 
 
@@ -108,6 +113,12 @@ def load_model_from_file(filename):
             '%s.rmts.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_ridge(fname):
+        from models.ridge import RidgeModel
+        return RidgeModel.load(
+            '%s.ridge.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
@@ -117,7 +128,8 @@ def load_model_from_file(filename):
         '.krg.pkl': load_krg,
         '.rbf.pkl': load_rbf,
         '.idw.pkl': load_idw,
-        '.rmts.pkl': load_rmts
+        '.rmts.pkl': load_rmts,
+        '.ridge.pkl': load_ridge
     }
 
     loaded_model_name, loaded_model = None, None
