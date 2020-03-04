@@ -45,8 +45,8 @@ class RBFModel(SMTModel):
                 if value is not None}
 
     def train(self, X_train, y_train):
-        self.smt_model = RBF(d0=d0,
-                             poly_degree=poly_degree,
-                             reg=reg)
+        self.smt_model = RBF(d0=self.d0,
+                             poly_degree=self.poly_degree,
+                             reg=self.reg)
 
         super(RBFModel, self).train(X_train, y_train)
