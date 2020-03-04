@@ -39,6 +39,17 @@ See [the implementation](./tbr_reg/visualizer.py) for details. Common usage is a
 tbr_visualizer
 ```
 
+
+### Compressing dimensions with autoencoders
+
+The package exposes the `tbr_ae` command line endpoint to enable lossy data compression with autoencoders.
+See [the implementation](./tbr_reg/run_autoencoders.py) for details. Common usage is as follows:
+
+```bash
+tbr_ae <data_dir> <batch_start> <batch_end> <optional arguments...>
+```
+
+
 License
 -------
 
