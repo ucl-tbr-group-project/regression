@@ -40,6 +40,10 @@ def get_model_factory():
         from models.ridge import RidgeModel
         return RidgeModel(**RidgeModel.parse_cli_args(args))
 
+    def init_sgd(args):
+        from models.sgd import SGDModel
+        return SGDModel(**SGDModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
@@ -49,7 +53,8 @@ def get_model_factory():
         'rbf': init_rbf,
         'idw': init_idw,
         'rmts': init_rmts,
-        'ridge': init_ridge
+        'ridge': init_ridge,
+        'sgd': init_sgd
     }
 
 
@@ -119,6 +124,12 @@ def load_model_from_file(filename):
             '%s.ridge.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_sgd(fname):
+        from models.sgd import SGDModel
+        return SGDModel.load(
+            '%s.sgd.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
@@ -129,7 +140,8 @@ def load_model_from_file(filename):
         '.rbf.pkl': load_rbf,
         '.idw.pkl': load_idw,
         '.rmts.pkl': load_rmts,
-        '.ridge.pkl': load_ridge
+        '.ridge.pkl': load_ridge,
+        '.sgd.pkl': load_sgd
     }
 
     loaded_model_name, loaded_model = None, None
