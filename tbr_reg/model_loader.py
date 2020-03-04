@@ -16,10 +16,15 @@ def get_model_factory():
         from models.knn import NearestNeighboursModel
         return NearestNeighboursModel(**NearestNeighboursModel.parse_cli_args(args))
 
+    def init_gpr(args):
+        from models.gpr import GaussianProcessModel
+        return GaussianProcessModel(**GaussianProcessModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
-        'knn': init_knn
+        'knn': init_knn,
+        'gpr': init_gpr
     }
 
 
@@ -53,11 +58,18 @@ def load_model_from_file(filename):
             '%s.knn.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_gpr(fname):
+        from models.gpr import GaussianProcessModel
+        return GaussianProcessModel.load(
+            '%s.gpr.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
         '.svm.pkl': load_svm,
-        '.knn.pkl': load_knn
+        '.knn.pkl': load_knn,
+        '.gpr.pkl': load_gpr
     }
 
     loaded_model_name, loaded_model = None, None
