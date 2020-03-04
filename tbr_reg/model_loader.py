@@ -28,13 +28,18 @@ def get_model_factory():
         from models.rbf import RBFModel
         return RBFModel(**RBFModel.parse_cli_args(args))
 
+    def init_idw(args):
+        from models.idw import IDWModel
+        return IDWModel(**IDWModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
         'knn': init_knn,
         'gpr': init_gpr,
         'krg': init_krg,
-        'rbf': init_rbf
+        'rbf': init_rbf,
+        'idw': init_idw
     }
 
 
@@ -86,6 +91,12 @@ def load_model_from_file(filename):
             '%s.rbf.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_idw(fname):
+        from models.idw import IDWModel
+        return IDWModel.load(
+            '%s.idw.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
@@ -93,7 +104,8 @@ def load_model_from_file(filename):
         '.knn.pkl': load_knn,
         '.gpr.pkl': load_gpr,
         '.krg.pkl': load_krg,
-        '.rbf.pkl': load_rbf
+        '.rbf.pkl': load_rbf,
+        '.idw.pkl': load_idw
     }
 
     loaded_model_name, loaded_model = None, None
