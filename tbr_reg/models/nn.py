@@ -1,7 +1,6 @@
 import argparse
 import matplotlib.pyplot as plt
 import joblib
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras import Sequential
 from keras.layers import Dense
 from keras.callbacks import ModelCheckpoint
@@ -24,7 +23,7 @@ class NeuralNetworkModel(RegressionModel):
                  out_scaler_file=None,
                  out_checkpoint_file=None,
                  out_arch_file=None):
-        RegressionModel.__init__(self, 'Neural network')
+        RegressionModel.__init__(self, 'Neural network', scaling=scaling)
 
         if out is not None:
             out_loss_plot_file = '%s.loss' % out
@@ -35,7 +34,6 @@ class NeuralNetworkModel(RegressionModel):
 
         self.epochs = epochs
         self.batch_size = batch_size
-        self.scaling = scaling
         self.validation_split = validation_split
         self.out = out
         self.out_loss_plot_file = out_loss_plot_file
@@ -45,15 +43,6 @@ class NeuralNetworkModel(RegressionModel):
         self.out_arch_file = out_arch_file
 
         self.net = None
-
-        if self.scaling == 'standard':
-            self.scaler = StandardScaler()
-        elif self.scaling == 'minmax':
-            self.scaler = MinMaxScaler()
-        elif self.scaling == 'none':
-            self.scaler = None
-        else:
-            raise ValueError('Unknown scaler.')
 
     @staticmethod
     def load(model=None, arch=None, weights=None, scaler=None):
@@ -121,11 +110,8 @@ class NeuralNetworkModel(RegressionModel):
         return model
 
     def train(self, X_train, y_train):
-        if self.scaler is not None:
-            X_train = self.scaler.fit_transform(X_train)
-            if self.out_scaler_file is not None:
-                joblib.dump(self.scaler, self.out_scaler_file)
-
+        X_train = self.scale_training_set(
+            X_train, out_scaler_file=self.out_scaler_file)
         self.net = self.create_architecture(X_train.shape[1])
 
         if self.out_arch_file is not None:
@@ -159,11 +145,9 @@ class NeuralNetworkModel(RegressionModel):
             plt.savefig('%s.pdf' % self.out_loss_plot_file)
 
     def evaluate(self, X_test, y_test):
-        if self.scaler is not None:
-            X_test = self.scaler.transform(X_test)
+        X_test = self.scale_testing_set(X_test)
         return self.net.evaluate(X_test, y_test, batch_size=self.batch_size)
 
     def predict(self, X):
-        if self.scaler is not None:
-            X = self.scaler.transform(X)
+        X = self.scale_testing_set(X)
         return self.net.predict(X, batch_size=self.batch_size)

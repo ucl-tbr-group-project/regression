@@ -1,7 +1,6 @@
 import argparse
 import matplotlib.pyplot as plt
 import joblib
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn.svm import SVR
 
@@ -17,26 +16,16 @@ class SupportVectorModel(RegressionModel):
                  out_model_file=None,
                  out_scaler_file=None
                  ):
-        RegressionModel.__init__(self, 'SVM')
+        RegressionModel.__init__(self, 'SVM', scaling=scaling)
 
         if out is not None:
             out_model_file = '%s.svm.pkl' % out
             out_scaler_file = '%s.scaler.pkl' % out
 
-        self.scaling = scaling
         self.out_scaler_file = out_scaler_file
         self.out_model_file = out_model_file
 
         self.svr = None
-
-        if self.scaling == 'standard':
-            self.scaler = StandardScaler()
-        elif self.scaling == 'minmax':
-            self.scaler = MinMaxScaler()
-        elif self.scaling == 'none':
-            self.scaler = None
-        else:
-            raise ValueError('Unknown scaler.')
 
     @staticmethod
     def load(model, scaler=None):
@@ -66,10 +55,8 @@ class SupportVectorModel(RegressionModel):
                 if value is not None}
 
     def train(self, X_train, y_train):
-        if self.scaler is not None:
-            X_train = self.scaler.fit_transform(X_train)
-            if self.out_scaler_file is not None:
-                joblib.dump(self.scaler, self.out_scaler_file)
+        X_train = self.scale_training_set(
+            X_train, out_scaler_file=self.out_scaler_file)
 
         self.svr = SVR(verbose=True).fit(X_train, y_train)
 
@@ -78,10 +65,10 @@ class SupportVectorModel(RegressionModel):
             joblib.dump(self.svr, self.out_model_file)
 
     def evaluate(self, X_test, y_test):
+        X_test = self.scale_testing_set(X_test)
         y_pred = self.predict(X_test)
         return mean_absolute_error(y_test, y_pred)
 
     def predict(self, X):
-        if self.scaler is not None:
-            X = self.scaler.transform(X)
+        X = self.scale_testing_set(X)
         return self.svr.predict(X)
