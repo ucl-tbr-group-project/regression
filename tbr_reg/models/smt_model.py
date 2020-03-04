@@ -1,5 +1,6 @@
 import argparse
 import joblib
+from sklearn.metrics import mean_absolute_error
 
 from models.basic_model import RegressionModel
 
@@ -49,7 +50,7 @@ class SMTModel(RegressionModel):
         X_train = self.scale_training_set(
             X_train, out_scaler_file=self.out_scaler_file)
 
-        self.smt_model.set_training_values(X_train, y_train)
+        self.smt_model.set_training_values(X_train, y_train.to_numpy())
         self.smt_model.train()
 
         # save trained model
