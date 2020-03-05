@@ -12,7 +12,7 @@ setup(
             'tbr_train = tbr_reg.run_training:main',
             'tbr_ae = tbr_reg.run_autoencoder:main',
             'tbr_split = tbr_reg.run_split_batches:main'
-        ]},
+        ],
         'gui_scripts': [
             'tbr_visualizer = tbr_reg.visualizer:main'
         ]}
