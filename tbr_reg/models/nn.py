@@ -17,6 +17,7 @@ class NeuralNetworkModel(RegressionModel):
                  batch_size=1024,  # (1, n_samples)
                  scaling='standard',  # standard|minmax|none
                  validation_split=0.25,  # (0,1)
+                 arch_type='1H_3F_256',
                  out=None,  # overrides all below
                  out_loss_plot_file=None,
                  out_model_file=None,
@@ -35,6 +36,7 @@ class NeuralNetworkModel(RegressionModel):
         self.epochs = epochs
         self.batch_size = batch_size
         self.validation_split = validation_split
+        self.arch_type = arch_type
         self.out = out
         self.out_loss_plot_file = out_loss_plot_file
         self.out_model_file = out_model_file
@@ -75,6 +77,8 @@ class NeuralNetworkModel(RegressionModel):
                             help='keras batch size')
         parser.add_argument('--scaling', type=str,
                             help='how to scale data before training')
+        parser.add_argument('--arch-type', type=str,
+                            help='network architecture')
         parser.add_argument('--out', type=str,
                             help='where to save all outputs')
         parser.add_argument('--out-loss-plot-file', type=str,
@@ -92,15 +96,26 @@ class NeuralNetworkModel(RegressionModel):
                 for key, value in vars(parser.parse_args(args)).items()
                 if value is not None}
 
-    def create_architecture(self, n_inputs):
+    def create_architecture(self, n_inputs, arch_type):
         model = Sequential()
-        model.add(Dense(128, input_dim=n_inputs, activation='relu'))
 
-        model.add(Dense(256, activation='relu'))
-        model.add(Dense(256, activation='relu'))
-        model.add(Dense(256, activation='relu'))
-
-        model.add(Dense(1, activation='linear'))
+        # 1xDense(N/2) + 3xDense(N)
+        if arch_type.startswith('1H_3F_'):
+            n = int(arch_type.split('_')[-1])
+            model.add(Dense(int(n/2), input_dim=n_inputs, activation='relu'))
+            model.add(Dense(n, activation='relu'))
+            model.add(Dense(n, activation='relu'))
+            model.add(Dense(n, activation='relu'))
+            model.add(Dense(1, activation='linear'))
+        # Dense(N * 1/3) + Dense(N * 2/3) + Dense(N) + Dense(N * 2/3) + Dense(N * 1/3)
+        elif arch_type.startswith('3diamond_'):
+            n = int(arch_type.split('_')[-1])
+            model.add(Dense(int(n/3), input_dim=n_inputs, activation='relu'))
+            model.add(Dense(int(2*n/3), activation='relu'))
+            model.add(Dense(n, activation='relu'))
+            model.add(Dense(int(2*n/3), activation='relu'))
+            model.add(Dense(int(n/3), activation='relu'))
+            model.add(Dense(1, activation='linear'))
 
         metrics = ['mae', 'mse']
         model.compile(optimizer='adam',
@@ -112,7 +127,7 @@ class NeuralNetworkModel(RegressionModel):
     def train(self, X_train, y_train):
         X_train = self.scale_training_set(
             X_train, out_scaler_file=self.out_scaler_file)
-        self.net = self.create_architecture(X_train.shape[1])
+        self.net = self.create_architecture(X_train.shape[1], self.arch_type)
 
         if self.out_arch_file is not None:
             with open(self.out_arch_file, 'w') as f:
