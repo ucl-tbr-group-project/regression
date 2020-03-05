@@ -27,7 +27,7 @@ where:
     - floating-point in the interval (0;1] determining the fractional size of the test set,
     - 0 to disable testing (in that case entire input is used to train the model),
     - a negative integer determining number of folds for cross-validation (e.g. `-5` yields 5-fold c.v.)
- - and `optional arguments` depend on the chosen model, see the contents of the `models/` directory for details.
+ - and `optional arguments` depend on the chosen model, see the contents of the [models/](./tbr_reg/models) directory for details.
 
 
 ### Visualizing models
@@ -43,7 +43,7 @@ tbr_visualizer
 ### Compressing dimensions with autoencoders
 
 The package exposes the `tbr_ae` command line endpoint to enable lossy data compression with autoencoders.
-See [the implementation](./tbr_reg/run_autoencoders.py) for details. Common usage is as follows:
+See [the implementation](./tbr_reg/run_autoencoder.py) for details. Common usage is as follows:
 
 ```bash
 tbr_ae <data_dir> <batch_start> <batch_end> <optional arguments...>
