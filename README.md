@@ -50,6 +50,17 @@ tbr_ae <data_dir> <batch_start> <batch_end> <optional arguments...>
 ```
 
 
+### Fixing discrete parameters
+
+The package exposes the `tbr_split` command line endpoint to separate mixed data sets into groups selected
+by fixing discrete parameters to constant values. See [the implementation](./tbr_reg/run_split_batches.py)
+for details. Common usage is as follows:
+
+```bash
+tbr_split <data_dir> <output_dir> <batch_start> <batch_end> <optional arguments...>
+```
+
+
 License
 -------
 
