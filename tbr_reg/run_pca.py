@@ -6,6 +6,7 @@ given discrete-sliced sample set.
 from tbr_reg import data_utils
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import os
 import pprint
@@ -67,5 +68,34 @@ def test_pca():
     with open("pca_out/pcasumvar.csv", 'w') as f:
         pprint.pprint(pcasumvar, f)
 
+def plot_pca():
+    indir = "pca_out"
+    data = np.array([])
+    for filename in os.listdir(indir):
+        if filename.startswith("result"):
+            fpath = os.path.join(indir,filename)
+            thisrow = np.loadtxt(fpath, max_rows=13)
+            data = np.append(data,thisrow)
+    data = data.reshape((int(data.shape[0]/13), 13))
+    df = pd.DataFrame(data)
+    dfmean = df.mean(axis=0)
+    dfmax = df.max(axis=0)
+    dfmin = df.min(axis=0)
+    print(dfmean)
+    print(dfmax)
+    print(dfmin)
+    colors = cm.rainbow(np.linspace(0, 1, 13))
+    
+    plt.rcParams.update({'font.size': 22})
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for j in range(13):
+        i = 12-j
+        print(dfmean[i])
+        ax.barh(0, dfmean[i], align='center', height=.1, color=colors[i],xerr=[[dfmean[i]-dfmin[i]],[dfmax[i]-dfmean[i]]])
+    plt.yticks([], [])
+    plt.xlabel('Percentage Variance')
+    plt.savefig(os.path.join(indir,'sumvarplot_run1.png'))
+    plt.show()
 if __name__ == '__main__':
-    test_pca()
+    plot_pca()
