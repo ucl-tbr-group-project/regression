@@ -2,7 +2,7 @@ import argparse
 import matplotlib.pyplot as plt
 import joblib
 from keras import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Conv1D, Reshape, Flatten
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model, model_from_yaml
 
@@ -115,6 +115,15 @@ class NeuralNetworkModel(RegressionModel):
             model.add(Dense(n, activation='relu'))
             model.add(Dense(int(2*n/3), activation='relu'))
             model.add(Dense(int(n/3), activation='relu'))
+            model.add(Dense(1, activation='linear'))
+        # 3xConv1D(64) of variable kernel size
+        elif arch_type.startswith('3conv_'):
+            kernel = int(arch_type.split('_')[-1])
+            model.add(Reshape((n_inputs, 1), input_shape=(n_inputs,)))
+            model.add(Conv1D(64, kernel, activation='relu'))
+            model.add(Conv1D(64, kernel, activation='relu'))
+            model.add(Conv1D(64, kernel, activation='relu'))
+            model.add(Flatten())
             model.add(Dense(1, activation='linear'))
 
         metrics = ['mae', 'mse']
