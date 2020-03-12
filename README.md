@@ -39,6 +39,20 @@ See [the implementation](./tbr_reg/visualizer.py) for details. Common usage is a
 tbr_visualizer
 ```
 
+### Evaluating models
+
+The package exposes the `tbr_eval` command line endpoint to enable visual model evaluation.
+See [the implementation](./tbr_reg/run_evaluation.py) for details. Common usage is as follows:
+
+```bash
+tbr_eval <data_dir> <batch_start> <batch_end> <model_file>
+```
+
+where:
+
+ - `data_dir` is path to directory containing CSV batch files,
+ - `batch_start` and `batch_end` is range of batch file indices to use,
+ - `model_file` is a path to previously saved model file.
 
 ### Compressing dimensions with autoencoders
 
