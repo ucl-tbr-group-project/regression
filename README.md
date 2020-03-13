@@ -39,6 +39,8 @@ See [the implementation](./tbr_reg/visualizer.py) for details. Common usage is a
 tbr_visualizer
 ```
 
+![Visualizer screenshot](./img/visualizer.png)
+
 ### Evaluating models
 
 The package exposes the `tbr_eval` command line endpoint to enable visual model evaluation.
@@ -53,6 +55,8 @@ where:
  - `data_dir` is path to directory containing CSV batch files,
  - `batch_start` and `batch_end` is range of batch file indices to use,
  - `model_file` is a path to previously saved model file.
+
+ ![Visualizer screenshot](./img/evaluation.png)
 
 ### Compressing dimensions with autoencoders
 
