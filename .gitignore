@@ -132,3 +132,6 @@ ATE
 outputs
 smt_src
 compression_experiment
+*.h5
+*.pkl
+GPUCache
