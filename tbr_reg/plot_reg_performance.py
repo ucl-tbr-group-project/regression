@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
-from plot_utils import density_scatter
 from sklearn.linear_model import Ridge
+
+from .plot_utils import density_scatter
 
 
 def plot_reg_performance(df, density_bins=80):
