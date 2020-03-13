@@ -5,6 +5,7 @@ import ATE
 from data_utils import load_batches, encode_data_frame, x_y_split
 from model_loader import load_model_from_file
 from plot_reg_performance import plot_reg_performance
+from plot_utils import set_plotting_style
 
 
 def main():
@@ -32,6 +33,8 @@ def main():
 
     df.insert(0, 'tbr_pred', -1.)
     df['tbr_pred'] = model.predict(X)
+
+    set_plotting_style()
 
     fig, ax = plot_reg_performance(
         df, density_bins=(None if args.no_density else 80))
