@@ -6,6 +6,12 @@ from .data_utils import encode_data_frame
 from .data_utils import x_y_split
 from .data_utils import c_d_y_split
 
+from .gans import create_discriminator
+from .gans import create_generator
+from .gans import create_discriminator_model
+from .gans import create_adversarial_model
+from .gans import train_gan
+
 from .model_loader import get_model_factory
 from .model_loader import load_model_from_file
 
