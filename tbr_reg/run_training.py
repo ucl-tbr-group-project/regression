@@ -71,12 +71,12 @@ def main():
 
 def train(model, X_train, y_train):
     print(f'Training regressor on set of size {X_train.shape[0]}')
-    model.train(X_train, y_train)
+    model.train(X_train.to_numpy(), y_train.to_numpy())
 
 
 def test(model, X_test, y_test):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
-    evaluation = model.evaluate(X_test, y_test)
+    evaluation = model.evaluate(X_test.to_numpy(), y_test.to_numpy())
     print(
         f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
     return evaluation

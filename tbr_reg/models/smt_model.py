@@ -47,10 +47,10 @@ class SMTModel(RegressionModel):
         return parser
 
     def train(self, X_train, y_train):
-        X_train = self.scale_training_set(
-            X_train, out_scaler_file=self.out_scaler_file)
+        X_train, y_train = self.scale_training_set(
+            X_train, y_train, out_scaler_file=self.out_scaler_file)
 
-        self.smt_model.set_training_values(X_train, y_train.to_numpy())
+        self.smt_model.set_training_values(X_train, y_train)
         self.smt_model.train()
 
         # save trained model
@@ -62,5 +62,6 @@ class SMTModel(RegressionModel):
         return mean_absolute_error(y_test, y_pred)
 
     def predict(self, X):
-        X = self.scale_testing_set(X)
-        return self.smt_model.predict_values(X)
+        X, _ = self.scale_testing_set(X, None)
+        y_pred = self.smt_model.predict_values(X)
+        return self.inverse_scale_predictions(y_pred)

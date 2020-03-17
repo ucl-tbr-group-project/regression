@@ -1,10 +1,12 @@
 import argparse
 import matplotlib.pyplot as plt
+import numpy as np
 import joblib
 from keras import Sequential
 from keras.layers import Dense, Conv1D, Reshape, Flatten
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model, model_from_yaml
+from sklearn.metrics import mean_absolute_error
 
 from models.basic_model import RegressionModel
 
@@ -134,8 +136,8 @@ class NeuralNetworkModel(RegressionModel):
         return model
 
     def train(self, X_train, y_train):
-        X_train = self.scale_training_set(
-            X_train, out_scaler_file=self.out_scaler_file)
+        X_train, y_train = self.scale_training_set(
+            X_train, y_train, out_scaler_file=self.out_scaler_file)
         self.net = self.create_architecture(X_train.shape[1], self.arch_type)
 
         if self.out_arch_file is not None:
@@ -162,9 +164,11 @@ class NeuralNetworkModel(RegressionModel):
 
         # save loss history plot
         if self.out_loss_plot_file is not None:
-            plt.plot(history.history['loss'])
-            plt.plot(history.history['val_loss'])
-            plt.ylabel('Loss')
+            plt.plot(self.inverse_scale_errors(
+                np.array(history.history['loss']).T))
+            plt.plot(self.inverse_scale_errors(
+                np.array(history.history['val_loss']).T))
+            plt.ylabel('Loss (MAE)')
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Validation'], loc='upper left')
             plt.tight_layout()
@@ -172,9 +176,10 @@ class NeuralNetworkModel(RegressionModel):
             plt.savefig('%s.pdf' % self.out_loss_plot_file)
 
     def evaluate(self, X_test, y_test):
-        X_test = self.scale_testing_set(X_test)
-        return self.net.evaluate(X_test, y_test, batch_size=self.batch_size)
+        y_pred = self.predict(X_test)
+        return mean_absolute_error(y_test, y_pred)
 
     def predict(self, X):
-        X = self.scale_testing_set(X)
-        return self.net.predict(X, batch_size=self.batch_size)
+        X, _ = self.scale_testing_set(X, None)
+        y = self.net.predict(X, batch_size=self.batch_size)
+        return self.inverse_scale_predictions(y)
