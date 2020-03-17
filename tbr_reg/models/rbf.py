@@ -1,7 +1,7 @@
 import joblib
 from smt.surrogate_models import RBF
 
-from models.smt_model import SMTModel
+from .smt_model import SMTModel
 
 
 class RBFModel(SMTModel):

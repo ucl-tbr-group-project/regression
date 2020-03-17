@@ -1,10 +1,10 @@
-from keras.layers import Input, Dense
-from keras.models import Model
-from keras import regularizers
-
-
 def create_autoencoder(input_dim, encoding_dim, deep_dims=[], regularize=False):
     '''Create autoencoder for given input and bottleneck size. Optionally add deep hidden layers or bottleneck regularization.'''
+
+    from keras.layers import Input, Dense
+    from keras.models import Model
+    from keras import regularizers
+
     input_layer = Input(shape=(input_dim,))
 
     # build encoding layers

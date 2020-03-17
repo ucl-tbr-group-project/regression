@@ -1,6 +1,6 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 
-from models.sklearn_model import SKLearnModel
+from .sklearn_model import SKLearnModel
 
 
 class GaussianProcessModel(SKLearnModel):

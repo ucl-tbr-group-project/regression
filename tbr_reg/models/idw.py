@@ -1,6 +1,6 @@
 from smt.surrogate_models import IDW
 
-from models.smt_model import SMTModel
+from .smt_model import SMTModel
 
 
 class IDWModel(SMTModel):

@@ -2,7 +2,7 @@ import argparse
 import joblib
 from sklearn.metrics import mean_absolute_error
 
-from models.basic_model import RegressionModel
+from .basic_model import RegressionModel
 
 
 class SMTModel(RegressionModel):

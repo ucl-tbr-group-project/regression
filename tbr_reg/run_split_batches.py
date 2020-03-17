@@ -1,7 +1,7 @@
 import os
 import argparse
 
-from data_utils import load_batches
+from .data_utils import load_batches
 
 
 def main():

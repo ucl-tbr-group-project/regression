@@ -1,6 +1,6 @@
 from sklearn.svm import SVR
 
-from models.sklearn_model import SKLearnModel
+from .sklearn_model import SKLearnModel
 
 
 class SupportVectorModel(SKLearnModel):

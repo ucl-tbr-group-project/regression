@@ -1,6 +1,6 @@
 from sklearn.linear_model import Ridge
 
-from models.sklearn_poly_model import SKLearnPolyModel
+from .sklearn_poly_model import SKLearnPolyModel
 
 
 class RidgeModel(SKLearnPolyModel):

@@ -1,6 +1,6 @@
 from sklearn.neighbors import KNeighborsRegressor
 
-from models.sklearn_model import SKLearnModel
+from .sklearn_model import SKLearnModel
 
 
 class NearestNeighboursModel(SKLearnModel):

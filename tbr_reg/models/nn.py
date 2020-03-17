@@ -8,7 +8,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import load_model, model_from_yaml
 from sklearn.metrics import mean_absolute_error
 
-from models.basic_model import RegressionModel
+from .basic_model import RegressionModel
 
 
 class NeuralNetworkModel(RegressionModel):

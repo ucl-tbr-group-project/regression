@@ -1,7 +1,7 @@
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 
-from models.sklearn_model import SKLearnModel
+from .sklearn_model import SKLearnModel
 
 
 class SKLearnPolyModel(SKLearnModel):

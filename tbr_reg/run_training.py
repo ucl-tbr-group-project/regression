@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
 import ATE
-from data_utils import load_batches, encode_data_frame, x_y_split
-from model_loader import get_model_factory
+from .data_utils import load_batches, encode_data_frame, x_y_split
+from .model_loader import get_model_factory
 
 
 def main():
