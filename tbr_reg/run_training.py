@@ -1,11 +1,14 @@
 import sys
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
 import ATE
 from .data_utils import load_batches, encode_data_frame, x_y_split
+from .plot_utils import set_plotting_style
+from .plot_reg_performance import plot_reg_performance
 from .model_loader import get_model_factory
 
 
@@ -26,8 +29,12 @@ def main():
                         help='end batch index (exclusive)')
     parser.add_argument('test_set_size', type=float,
                         help='fractional size of the test set, set 0 to disable testing and to negative value k for k-fold cross-validation')
-    args = parser.parse_args(sys.argv[1:6])
-    model = get_model_factory()[args.type](sys.argv[6:])
+    parser.add_argument('plot_perf', type=str,
+                        help='set 0 to disable performance plots, set int to enable interactive plots, set anything else to save plots in a file')
+    args = parser.parse_args(sys.argv[1:7])
+    model = get_model_factory()[args.type](sys.argv[7:])
+
+    set_plotting_style()
 
     # load data
     df = load_batches(args.in_dir, (args.batch_low, args.batch_high))
@@ -41,6 +48,8 @@ def main():
             X, y, test_size=args.test_set_size, random_state=random_state)
         train(model, X_train, y_train)
         test(model, X_test, y_test)
+        if args.plot_perf != '0':
+            plot(args.plot_perf, model, X_test, y_test)
     elif args.test_set_size == 0:  # testing disabled
         X_train, y_train = X, y
         train(model, X_train, y_train)
@@ -59,6 +68,10 @@ def main():
             train(model, X_train, y_train)
             evaluation = test(model, X_test, y_test)
             kfold_scores.append(evaluation)
+
+            if args.plot_perf != '0':
+                plot(args.plot_perf % fold_idx, model, X_test, y_test)
+
             print(f'Fold {fold_idx+1} of {k} done.')
             fold_idx += 1
 
@@ -80,6 +93,22 @@ def test(model, X_test, y_test):
     print(
         f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
     return evaluation
+
+
+def plot(save_plot_path, model, X_test, y_test):
+    df = X_test.copy()
+    df.insert(0, 'tbr', -1.)
+    df.insert(0, 'tbr_pred', -1.)
+    df['tbr'] = y_test
+    df['tbr_pred'] = model.predict(X_test)
+
+    fig, ax = plot_reg_performance(df, density_bins=80)
+    plt.tight_layout()
+
+    if save_plot_path == 'int':
+        plt.show()
+    else:
+        plt.savefig(save_plot_path)
 
 
 if __name__ == '__main__':
