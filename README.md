@@ -15,7 +15,7 @@ The package exposes the `tbr_train` command line endpoint to enable quick model 
 See [the implementation](./tbr_reg/run_training.py) for details. Common usage is as follows:
 
 ```bash
-tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <optional arguments...>
+tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <plot_perf> <optional arguments...>
 ```
 
 where:
@@ -25,8 +25,12 @@ where:
  - `batch_start` and `batch_end` is range of batch file indices to use,
  - `test_fraction` can be either:
     - floating-point in the interval (0;1] determining the fractional size of the test set,
-    - 0 to disable testing (in that case entire input is used to train the model),
+    - `0` to disable testing (in that case entire input is used to train the model),
     - a negative integer determining number of folds for cross-validation (e.g. `-5` yields 5-fold c.v.)
+ - `plot_perf` can be either:
+    - `int` to generate interactive regression performance plot,
+    - `0` to disable performance plotting,
+    - a file name where to save the plot (to avoid overwriting files in cross-validation, the filename can include `%d` which will be replaced for the fold index)
  - and `optional arguments` depend on the chosen model, see the contents of the [models/](./tbr_reg/models) directory for details.
 
 
