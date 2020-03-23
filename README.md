@@ -15,7 +15,7 @@ The package exposes the `tbr_train` command line endpoint to enable quick model 
 See [the implementation](./tbr_reg/run_training.py) for details. Common usage is as follows:
 
 ```bash
-tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <plot_perf> <optional arguments...>
+tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <plot_perf> <feature_def> <optional arguments...>
 ```
 
 where:
@@ -31,6 +31,9 @@ where:
     - `int` to generate interactive regression performance plot,
     - `0` to disable performance plotting,
     - a file name where to save the plot (to avoid overwriting files in cross-validation, the filename can include `%d` which will be replaced for the fold index)
+ - `feature_def` can be either:
+    - `0` to include all features,
+    - a name of a file containing a line-separated list of features to include,
  - and `optional arguments` depend on the chosen model, see the contents of the [models/](./tbr_reg/models) directory for details.
 
 
