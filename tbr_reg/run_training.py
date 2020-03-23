@@ -31,8 +31,10 @@ def main():
                         help='fractional size of the test set, set 0 to disable testing and to negative value k for k-fold cross-validation')
     parser.add_argument('plot_perf', type=str,
                         help='set 0 to disable performance plots, set int to enable interactive plots, set anything else to save plots in a file')
-    args = parser.parse_args(sys.argv[1:7])
-    model = get_model_factory()[args.type](sys.argv[7:])
+    parser.add_argument('feature_def', type=str,
+                        help='set 0 to allow all features, otherwise set path to file with line-separated (encoded) whitelisted feature names')
+    args = parser.parse_args(sys.argv[1:8])
+    model = get_model_factory()[args.type](sys.argv[8:])
 
     set_plotting_style()
 
@@ -41,7 +43,15 @@ def main():
     df_enc = encode_data_frame(df, ATE.Domain())
     X, y_multiple = x_y_split(df_enc)
     y = y_multiple['tbr']
+
+    if args.feature_def != '0':
+        with open(args.feature_def, 'r') as f:
+            included_features = [line.strip() for line in f.readlines()
+                                 if len(line) > 0]
+            X = X[included_features].copy()
+
     X = X.sort_index(axis=1)
+    print(f'Features in order are: {list(X.columns)}')
 
     if args.test_set_size > 0:  # fractional test set size
         X_train, X_test, y_train, y_test = train_test_split(
