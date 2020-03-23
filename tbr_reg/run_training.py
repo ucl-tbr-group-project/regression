@@ -9,7 +9,7 @@ import ATE
 from .data_utils import load_batches, encode_data_frame, x_y_split
 from .plot_utils import set_plotting_style
 from .plot_reg_performance import plot_reg_performance
-from .model_loader import get_model_factory
+from .model_loader import get_model_factory, load_model_from_file
 
 
 def main():
@@ -33,8 +33,10 @@ def main():
                         help='set 0 to disable performance plots, set int to enable interactive plots, set anything else to save plots in a file')
     parser.add_argument('feature_def', type=str,
                         help='set 0 to allow all features, otherwise set path to file with line-separated (encoded) whitelisted feature names')
-    args = parser.parse_args(sys.argv[1:8])
-    model = get_model_factory()[args.type](sys.argv[8:])
+    parser.add_argument('prev_model', type=str,
+                        help='set 0 to only use feature input, set to model path file name to include its predictions as another feature')
+    args = parser.parse_args(sys.argv[1:9])
+    model = get_model_factory()[args.type](sys.argv[9:])
 
     set_plotting_style()
 
@@ -49,6 +51,12 @@ def main():
             included_features = [line.strip() for line in f.readlines()
                                  if len(line) > 0]
             X = X[included_features].copy()
+
+    if args.prev_model != '0':
+        prev_model_name, prev_model = load_model_from_file(args.prev_model)
+        y_prev = prev_model.predict(X)
+        X.insert(0, 'tbr_prev', -1.)
+        X['tbr_prev'] = y_prev
 
     X = X.sort_index(axis=1)
     print(f'Features in order are: {list(X.columns)}')
