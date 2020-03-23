@@ -118,7 +118,8 @@ def plot(save_plot_path, model, X_test, y_test):
     if save_plot_path == 'int':
         plt.show()
     else:
-        plt.savefig(save_plot_path)
+        plt.savefig('%s.png' % save_plot_path)
+        plt.savefig('%s.pdf' % save_plot_path)
 
 
 if __name__ == '__main__':
