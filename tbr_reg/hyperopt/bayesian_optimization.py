@@ -24,7 +24,8 @@ def model_space_to_dims(model_space):
 
 
 def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator, metric,
-                          evaluation_handler, args_handler=None, post_evaluation_handler=None):
+                          evaluation_handler, args_handler=None, post_evaluation_handler=None,
+                          n_iterations=200):
     dim_names, dims = model_space_to_dims(model_space)
     opt = Optimizer(dims)
 
@@ -34,7 +35,7 @@ def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creato
         data['score%d' % i] = []
 
     model_idx = 0
-    for i in range(20):
+    for i in range(n_iterations):
         suggested = opt.ask()
         model_args = {name: value for name, value in zip(dim_names, suggested)}
         print('Trying model configuration: %s' % model_args)
