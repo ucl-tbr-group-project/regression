@@ -26,6 +26,9 @@ class AdaBoostModel(SKLearnModel):
     '''A AdaBoost regressor, implemented by SciKit.'''
 
     def __init__(self,
+                 n_estimators=50,
+                 learning_rate=1.0,
+                 loss='linear',  # linear|square|exponential
                  random_state=0,
                  scaling='standard',  # standard|minmax|none
                  out=None,  # overrides all below
@@ -38,6 +41,9 @@ class AdaBoostModel(SKLearnModel):
                               out_model_file=out_model_file,
                               out_scaler_file=out_scaler_file)
 
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.loss = loss
         self.random_state = random_state
 
     @staticmethod
@@ -48,6 +54,9 @@ class AdaBoostModel(SKLearnModel):
     def parse_cli_args(args):
         parser = SKLearnModel.create_cli_parser('Train AdaBoost')
 
+        parser.add_argument('--n-estimators', type=int)
+        parser.add_argument('--learning-rate', type=float)
+        parser.add_argument('--loss', type=str)
         parser.add_argument('--random-state', type=int,
                             help='seed for PRNG used in training')
 
@@ -57,6 +66,9 @@ class AdaBoostModel(SKLearnModel):
 
     def train(self, X_train, y_train):
         self.sklearn_model = AdaBoostRegressor(
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            loss=self.loss,
             random_state=self.random_state
         )
         super(AdaBoostModel, self).train(X_train, y_train)

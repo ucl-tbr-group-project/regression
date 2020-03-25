@@ -1,0 +1,5 @@
+model_type: 'ab'
+search_space:
+    n_estimators: !!python/tuple [10, 100, 10, 'i']
+    learning_rate: !!python/tuple [0.1, 1.5, 10, 'f']
+    loss: ['linear', 'square', 'exponential']
