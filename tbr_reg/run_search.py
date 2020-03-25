@@ -67,6 +67,16 @@ def main():
     scores = grid_search(X, y, args.k_folds, random_state,
                          model_space, model_creator, args.out_dir)
 
+    print('Search completed.')
+    print('=====================================================')
+    print('')
+
+    best_idx = scores['mean_score'].argmin()
+    print(
+        f'Best found model index: {best_idx} with mean score: {scores.iloc[best_idx]["mean_score"]}')
+    print('Best found model parameters:')
+    print(scores.iloc[best_idx])
+
     print('Done.')
 
 
