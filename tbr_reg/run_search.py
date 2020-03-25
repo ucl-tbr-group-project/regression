@@ -1,11 +1,11 @@
 import os
 import sys
 import argparse
+import itertools
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import itertools
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
 import ATE
@@ -29,12 +29,15 @@ def main():
                         help='start batch index (inclusive)')
     parser.add_argument('batch_high', type=int,
                         help='end batch index (exclusive)')
-    parser.add_argument('k_folds', type=int,
-                        help='k for k-fold cross-validation')
     parser.add_argument('out_dir', type=str,
                         help='output directory')
-    parser.add_argument('feature_def', type=str,
-                        help='set 0 to allow all features, otherwise set path to file with line-separated (encoded) whitelisted feature names')
+    parser.add_argument('search_space_config', type=str,
+                        help='path to YAML search space configuration file')
+
+    parser.add_argument('--feature-def', type=str,
+                        help='path to file with line-separated (encoded) whitelisted feature names')
+    parser.add_argument('--k-folds', type=int, default=5,
+                        help='k for k-fold cross-validation')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -45,7 +48,7 @@ def main():
     X, y_multiple = x_y_split(df_enc)
     y = y_multiple['tbr']
 
-    if args.feature_def != '0':
+    if args.feature_def is not None:
         with open(args.feature_def, 'r') as f:
             included_features = [line.strip() for line in f.readlines()
                                  if len(line) > 0]
@@ -54,22 +57,17 @@ def main():
     X = X.sort_index(axis=1)
     print(f'Features in order are: {list(X.columns)}')
 
-    model_creator, model_space = prepare_model_domain()
+    with open(args.search_space_config) as f:
+        search_space_dict = yaml.load(f.read())
+
+    model_type = search_space_dict['model_type']
+    model_creator = get_model_factory()[model_type]
+    model_space = search_space_dict['search_space']
+
     scores = grid_search(X, y, args.k_folds, random_state,
                          model_space, model_creator, args.out_dir)
 
     print('Done.')
-
-
-def prepare_model_domain():
-    model_type = 'svm'
-    creator = get_model_factory()[model_type]
-    search_space = {
-        'degree': (3, 10, 8),
-        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-    }
-
-    return creator, search_space
 
 
 def model_space_product(model_space):
