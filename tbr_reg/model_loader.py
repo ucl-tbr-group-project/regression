@@ -58,7 +58,7 @@ def get_model_factory():
 def load_model_from_file(filename):
     '''Instantiate a trained model from a file previously created using .save().'''
 
-    suffix_to_loader = {factory.extension: factory.load_model
+    suffix_to_loader = {factory.get_suffix(): factory.load_model
                         for factory in create_factories()}
 
     loaded_model_name, loaded_model = None, None
