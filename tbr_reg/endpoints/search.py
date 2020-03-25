@@ -14,6 +14,7 @@ from ..plot_utils import set_plotting_style
 from ..plot_reg_performance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
 from ..hyperopt.grid_search import grid_search
+from ..hyperopt.bayesian_optimization import bayesian_optimization
 
 
 def main():
@@ -41,6 +42,8 @@ def main():
                         help='k for k-fold cross-validation')
     parser.add_argument('--score', type=str, default='r2',
                         help='metric for model quality evaluation, supported values: "r2" (default), "mae"')
+    parser.add_argument('--strategy', type=str, default='grid',
+                        help='algorithm used for search, supported values: "grid" (default), "bayesian"')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -75,7 +78,7 @@ def main():
             args.out_dir, '%04d_%0.06f' % (model_idx, model_mean_score))
 
     def get_output_file():
-        return os.path.join(args.out_dir, 'grid_search.csv')
+        return os.path.join(args.out_dir, 'search.csv')
 
     def args_handler(model_idx, model_args):
         model_dir = get_model_dir(model_idx)
@@ -147,8 +150,15 @@ def main():
             scores = pd.DataFrame(data=data)
             scores.to_csv(out_file)
 
-    scores = grid_search(X, y, args.k_folds, random_state, model_space, model_creator,
-                         evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler)
+    if args.strategy == 'grid':
+        search_algorithm = grid_search
+    elif args.strategy == 'bayesian':
+        search_algorithm = bayesian_optimization
+    else:
+        raise ValueError(f'Unknown search strategy "{args.search_strategy}"')
+
+    scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator,
+                              evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler)
 
     print('Search completed.')
     print('=====================================================')

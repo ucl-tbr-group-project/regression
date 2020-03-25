@@ -19,7 +19,7 @@ def model_space_product(model_space):
 
     The values in the input dictionary can be either:
       - lists--these are treated as categorical values, or
-      - 3-tuples--these are passed to np.linspace to discretize a linear subspace.
+      - 4-tuples--these are passed to np.linspace to discretize a linear subspace (excluding the last component).
     '''
 
     product_args = []
@@ -29,7 +29,7 @@ def model_space_product(model_space):
         product_args.append(name)
 
         if isinstance(values, tuple):  # linear subspace
-            low, high, n_steps = values
+            low, high, n_steps, value_type = values
             product_input.append(np.linspace(low, high, n_steps).tolist())
         else:  # exhaustive list of options
             product_input.append(values)

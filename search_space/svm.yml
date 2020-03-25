@@ -1,4 +1,4 @@
 model_type: 'svm'
 search_space:
-    degree: !!python/tuple [3, 10, 8]
+    degree: !!python/tuple [3, 10, 8, 'i']
     kernel: ['linear', 'poly', 'rbf', 'sigmoid']
