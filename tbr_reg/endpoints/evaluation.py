@@ -24,6 +24,9 @@ def main():
     args = parser.parse_args()
 
     model_name, model = load_model_from_file(args.model_file)
+    if model is None:
+        raise ValueError(
+            'Model not loaded. Are you sure you have the right file?')
 
     df = load_batches(args.in_dir, (args.batch_low, args.batch_high))
     df_enc = encode_data_frame(df, ATE.Domain())
