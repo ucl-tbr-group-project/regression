@@ -40,6 +40,9 @@ def create_factories():
     from .models.gbt import GradientBoostingFactory
     factories.append(GradientBoostingFactory())
 
+    from .models.ert import ExtremelyRandomizedTreesFactory
+    factories.append(ExtremelyRandomizedTreesFactory())
+
     from .models.nn import NeuralNetworkSavedModelFactory, NeuralNetworkCheckpointFactory
     factories.append(NeuralNetworkSavedModelFactory())
     factories.append(NeuralNetworkCheckpointFactory())
