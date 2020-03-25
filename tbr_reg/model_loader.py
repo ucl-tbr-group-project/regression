@@ -34,6 +34,9 @@ def create_factories():
     from .models.sgd import SGDFactory
     factories.append(SGDFactory())
 
+    from .models.ab import AdaBoostFactory
+    factories.append(AdaBoostFactory())
+
     from .models.nn import NeuralNetworkSavedModelFactory, NeuralNetworkCheckpointFactory
     factories.append(NeuralNetworkSavedModelFactory())
     factories.append(NeuralNetworkCheckpointFactory())
