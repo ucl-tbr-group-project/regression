@@ -44,6 +44,10 @@ def get_model_factory():
         from .models.sgd import SGDModel
         return SGDModel(**SGDModel.parse_cli_args(args))
 
+    def init_rf(args):
+        from .models.rf import RandomForestModel
+        return RandomForestModel(**RandomForestModel.parse_cli_args(args))
+
     return {
         'nn': init_nn,
         'svm': init_svm,
@@ -54,7 +58,8 @@ def get_model_factory():
         'idw': init_idw,
         'rmts': init_rmts,
         'ridge': init_ridge,
-        'sgd': init_sgd
+        'sgd': init_sgd,
+        'rf': init_rf
     }
 
 
@@ -130,6 +135,12 @@ def load_model_from_file(filename):
             '%s.sgd.pkl' % fname,
             scaler='%s.scaler.pkl' % fname)
 
+    def load_rf(fname):
+        from .models.rf import RandomForestModel
+        return RandomForestModel.load(
+            '%s.rf.pkl' % fname,
+            scaler='%s.scaler.pkl' % fname)
+
     suffix_to_loader = {
         '.nn.h5': load_nn_full,
         '.nncp.h5': load_nn_cp_arch,
@@ -141,7 +152,8 @@ def load_model_from_file(filename):
         '.idw.pkl': load_idw,
         '.rmts.pkl': load_rmts,
         '.ridge.pkl': load_ridge,
-        '.sgd.pkl': load_sgd
+        '.sgd.pkl': load_sgd,
+        '.rf.pkl': load_rf
     }
 
     loaded_model_name, loaded_model = None, None
