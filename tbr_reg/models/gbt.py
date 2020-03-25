@@ -10,8 +10,11 @@ class GradientBoostingFactory:
     def get_suffix(self):
         return '.%s.pkl' % self.extension
 
-    def init_model(self, args):
-        return GradientBoostingModel(**GradientBoostingModel.parse_cli_args(args))
+    def init_model(self, cli_args=None, arg_dict=None):
+        if cli_args is None and arg_dict is None:
+            raise ValueError('CLI or dictionary arguments must be provided.')
+        return GradientBoostingModel(**GradientBoostingModel.parse_cli_args(cli_args)) if arg_dict is None \
+            else GradientBoostingModel(**arg_dict)
 
     def load_model(self, fname):
         return GradientBoostingModel.load(

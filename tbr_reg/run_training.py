@@ -36,7 +36,7 @@ def main():
     parser.add_argument('prev_model', type=str,
                         help='set 0 to only use feature input, set to model path file name to include its predictions as another feature')
     args = parser.parse_args(sys.argv[1:9])
-    model = get_model_factory()[args.type](sys.argv[9:])
+    model = get_model_factory()[args.type](cli_args=sys.argv[9:])
 
     set_plotting_style()
 
