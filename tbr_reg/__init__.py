@@ -12,6 +12,9 @@ from .gans import create_discriminator_model
 from .gans import create_adversarial_model
 from .gans import train_gan
 
+from .hyperopt.grid_search import grid_search
+from .hyperopt.model_space import model_space_product
+
 from .model_loader import get_model_factory
 from .model_loader import load_model_from_file
 
