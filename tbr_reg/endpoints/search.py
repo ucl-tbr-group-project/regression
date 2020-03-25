@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import KFold
+from sklearn.metrics import mean_absolute_error, r2_score
 
 import ATE
 from ..data_utils import load_batches, encode_data_frame, x_y_split
@@ -38,6 +39,8 @@ def main():
                         help='path to file with line-separated (encoded) whitelisted feature names')
     parser.add_argument('--k-folds', type=int, default=5,
                         help='k for k-fold cross-validation')
+    parser.add_argument('--score', type=str, default='r2',
+                        help='metric for model quality evaluation, supported values: "r2" (default), "mae"')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -98,7 +101,7 @@ def main():
 
             try:
                 train(model, X_train, y_train)
-                evaluation = test(model, X_test, y_test)
+                evaluation = test(model, X_test, y_test, score=args.score)
                 kfold_scores.append(evaluation)
 
                 plot_perf_path = os.path.join(
@@ -151,7 +154,7 @@ def main():
     print('=====================================================')
     print('')
 
-    best_idx = scores['mean_score'].argmin()
+    best_idx = find_best_idx(scores, args.score)
     print(
         f'Best found model index: {best_idx} with mean score: {scores.iloc[best_idx]["mean_score"]}')
     print('Best found model parameters:')
@@ -160,14 +163,32 @@ def main():
     print('Done.')
 
 
+def find_best_idx(scores, score):
+    if score == 'mae':
+        return scores['mean_score'].argmin()
+    elif score == 'r2':
+        return ((scores['mean_score'] - 1.0) ** 2).idxmin()
+    else:
+        raise ValueError(f'Unknown score {score}')
+
+
 def train(model, X_train, y_train):
     print(f'Training regressor on set of size {X_train.shape[0]}')
     model.train(X_train.to_numpy(), y_train.to_numpy())
 
 
-def test(model, X_test, y_test):
+def test(model, X_test, y_test, score):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
-    evaluation = model.evaluate(X_test.to_numpy(), y_test.to_numpy())
+    y_pred = model.predict(X_test.to_numpy())
+    y_test = y_test.to_numpy()
+
+    if score == 'mae':
+        evaluation = mean_absolute_error(y_test, y_pred)
+    elif score == 'r2':
+        evaluation = r2_score(y_test, y_pred)
+    else:
+        raise ValueError(f'Unknown score {score}')
+
     print(
         f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
     return evaluation
