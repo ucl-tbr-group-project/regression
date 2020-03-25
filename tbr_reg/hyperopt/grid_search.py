@@ -3,7 +3,7 @@ import pandas as pd
 from .model_space import model_space_product
 
 
-def grid_search(X, y, k_folds, random_state, model_space, model_creator,
+def grid_search(X, y, k_folds, random_state, model_space, model_creator, metric,
                 evaluation_handler, args_handler=None, post_evaluation_handler=None):
     data = {column: [] for column in model_space.keys()}
     data['mean_score'] = []

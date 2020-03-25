@@ -23,7 +23,7 @@ def model_space_to_dims(model_space):
     return dim_names, dims
 
 
-def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator,
+def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator, metric,
                           evaluation_handler, args_handler=None, post_evaluation_handler=None):
     dim_names, dims = model_space_to_dims(model_space)
     opt = Optimizer(dims)
@@ -55,7 +55,7 @@ def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creato
         for i in range(k_folds):
             data['score%d' % i].append(model_scores[i])
 
-        opt.tell(suggested, model_mean_score)
+        opt.tell(suggested, metric.rank(model_mean_score))
 
         if post_evaluation_handler is not None:
             post_evaluation_handler(model_idx, data, model_mean_score)

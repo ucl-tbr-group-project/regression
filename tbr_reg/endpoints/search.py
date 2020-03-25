@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import KFold
-from sklearn.metrics import mean_absolute_error, r2_score
 
 import ATE
 from ..data_utils import load_batches, encode_data_frame, x_y_split
@@ -15,6 +14,7 @@ from ..plot_reg_performance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
 from ..hyperopt.grid_search import grid_search
 from ..hyperopt.bayesian_optimization import bayesian_optimization
+from ..metric_loader import get_metric_factory
 
 
 def main():
@@ -66,6 +66,8 @@ def main():
     with open(args.search_space_config) as f:
         search_space_dict = yaml.load(f.read())
 
+    metric = get_metric_factory()[args.score]()
+
     model_type = search_space_dict['model_type']
     model_creator = get_model_factory()[model_type]
     model_space = search_space_dict['search_space']
@@ -104,7 +106,7 @@ def main():
 
             try:
                 train(model, X_train, y_train)
-                evaluation = test(model, X_test, y_test, score=args.score)
+                evaluation = test(model, X_test, y_test, metric=metric)
                 kfold_scores.append(evaluation)
 
                 plot_perf_path = os.path.join(
@@ -157,14 +159,14 @@ def main():
     else:
         raise ValueError(f'Unknown search strategy "{args.search_strategy}"')
 
-    scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator,
+    scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator, metric,
                               evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler)
 
     print('Search completed.')
     print('=====================================================')
     print('')
 
-    best_idx = find_best_idx(scores, args.score)
+    best_idx = metric.rank(scores["mean_score"]).idxmin()
     print(
         f'Best found model index: {best_idx} with mean score: {scores.iloc[best_idx]["mean_score"]}')
     print('Best found model parameters:')
@@ -173,34 +175,19 @@ def main():
     print('Done.')
 
 
-def find_best_idx(scores, score):
-    if score == 'mae':
-        return scores['mean_score'].argmin()
-    elif score == 'r2':
-        return ((scores['mean_score'] - 1.0) ** 2).idxmin()
-    else:
-        raise ValueError(f'Unknown score {score}')
-
-
 def train(model, X_train, y_train):
     print(f'Training regressor on set of size {X_train.shape[0]}')
     model.train(X_train.to_numpy(), y_train.to_numpy())
 
 
-def test(model, X_test, y_test, score):
+def test(model, X_test, y_test, metric):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
     y_pred = model.predict(X_test.to_numpy())
     y_test = y_test.to_numpy()
 
-    if score == 'mae':
-        evaluation = mean_absolute_error(y_test, y_pred)
-    elif score == 'r2':
-        evaluation = r2_score(y_test, y_pred)
-    else:
-        raise ValueError(f'Unknown score {score}')
-
+    evaluation = metric.evaluate(y_test, y_pred)
     print(
-        f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
+        f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
     return evaluation
 
 
