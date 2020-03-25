@@ -88,6 +88,24 @@ for details. Common usage is as follows:
 tbr_split <data_dir> <output_dir> <batch_start> <batch_end> <optional arguments...>
 ```
 
+### Searching hyperparameter space
+
+The package exposes the `tbr_search` command line endpoint to facilitate search of arbitrary subspace of the model hyperparameter domain.
+See [the implementation](./tbr_reg/run_search.py) for details. Common usage is as follows:
+
+```bash
+tbr_search <data_dir> <batch_start> <batch_end> <out_dir> <search_space_config> [--feature-def=path] [--k-folds=int]
+```
+
+where:
+
+ - `data_dir` is path to directory containing CSV batch files,
+ - `batch_start` and `batch_end` is range of batch file indices to use,
+ - `out_dir` is path to output (writable) directory (warning: may be overwritten if not empty!)
+ - `search_space_config` is path a YAML file that determines the model and the searched subspace of its hyperparameter domain (see [the `./search_space` directory](./search_space) for examples corresponding to various models)
+ - `--feature_def`, if provided, is a name of a file containing a line-separated list of features to include,
+ - `--k-folds`, if provided, is overriding nnumber of folds used for cross-validation (defaults to 5)
+
 
 License
 -------
