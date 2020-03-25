@@ -12,7 +12,7 @@ The repository provides the `tbr_reg` Python package. Use `pip` to install it on
 ### Training & evaluating models
 
 The package exposes the `tbr_train` command line endpoint to enable quick model training and evaluation.
-See [the implementation](./tbr_reg/run_training.py) for details. Common usage is as follows:
+See [the implementation](./tbr_reg/endpoints/training.py) for details. Common usage is as follows:
 
 ```bash
 tbr_train <model> <data_dir> <batch_start> <batch_end> <test_fraction> <plot_perf> <feature_def> <prev_model> <optional arguments...>
@@ -54,7 +54,7 @@ tbr_visualizer
 ### Evaluating models
 
 The package exposes the `tbr_eval` command line endpoint to enable visual model evaluation.
-See [the implementation](./tbr_reg/run_evaluation.py) for details. Common usage is as follows:
+See [the implementation](./tbr_reg/endpoints/evaluation.py) for details. Common usage is as follows:
 
 ```bash
 tbr_eval <data_dir> <batch_start> <batch_end> <model_file>
@@ -71,7 +71,7 @@ where:
 ### Compressing dimensions with autoencoders
 
 The package exposes the `tbr_ae` command line endpoint to enable lossy data compression with autoencoders.
-See [the implementation](./tbr_reg/run_autoencoder.py) for details. Common usage is as follows:
+See [the implementation](./tbr_reg/endpoints/autoencoder.py) for details. Common usage is as follows:
 
 ```bash
 tbr_ae <data_dir> <batch_start> <batch_end> <optional arguments...>
@@ -81,7 +81,7 @@ tbr_ae <data_dir> <batch_start> <batch_end> <optional arguments...>
 ### Fixing discrete parameters
 
 The package exposes the `tbr_split` command line endpoint to separate mixed data sets into groups selected
-by fixing discrete parameters to constant values. See [the implementation](./tbr_reg/run_split_batches.py)
+by fixing discrete parameters to constant values. See [the implementation](./tbr_reg/endpoints/split_batches.py)
 for details. Common usage is as follows:
 
 ```bash
@@ -91,7 +91,7 @@ tbr_split <data_dir> <output_dir> <batch_start> <batch_end> <optional arguments.
 ### Searching hyperparameter space
 
 The package exposes the `tbr_search` command line endpoint to facilitate search of arbitrary subspace of the model hyperparameter domain.
-See [the implementation](./tbr_reg/run_search.py) for details. Common usage is as follows:
+See [the implementation](./tbr_reg/endpoints/search.py) for details. Common usage is as follows:
 
 ```bash
 tbr_search <data_dir> <batch_start> <batch_end> <out_dir> <search_space_config> [--feature-def=path] [--k-folds=int]

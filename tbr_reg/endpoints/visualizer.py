@@ -11,8 +11,8 @@ import pandas as pd
 import numpy as np
 
 from ATE import Domain, UniformSamplingStrategy, SumParameterGroup, ContinuousParameter, Samplerun
-from data_utils import encode_data_frame
-from model_loader import load_model_from_file
+from ..data_utils import encode_data_frame
+from ..model_loader import load_model_from_file
 
 import random
 

@@ -1,8 +1,8 @@
 import argparse
 from sklearn.preprocessing import StandardScaler
 
-from data_utils import load_batches, encode_data_frame, x_y_split
-from autoencoders import train_autoencoder
+from ..data_utils import load_batches, encode_data_frame, x_y_split
+from ..autoencoders import train_autoencoder
 import ATE
 
 

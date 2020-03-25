@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import argparse
 
 import ATE
-from .data_utils import load_batches, encode_data_frame, x_y_split
-from .model_loader import load_model_from_file
-from .plot_reg_performance import plot_reg_performance
-from .plot_utils import set_plotting_style
+from ..data_utils import load_batches, encode_data_frame, x_y_split
+from ..model_loader import load_model_from_file
+from ..plot_reg_performance import plot_reg_performance
+from ..plot_utils import set_plotting_style
 
 
 def main():

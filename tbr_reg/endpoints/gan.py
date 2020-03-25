@@ -6,9 +6,9 @@ from sklearn.preprocessing import StandardScaler
 
 
 import ATE
-from .data_utils import load_batches, encode_data_frame, x_y_split
-from .plot_utils import set_plotting_style
-from .gans import create_adversarial_model, create_discriminator_model, create_discriminator, create_generator, train_gan
+from ..data_utils import load_batches, encode_data_frame, x_y_split
+from ..plot_utils import set_plotting_style
+from ..gans import create_adversarial_model, create_discriminator_model, create_discriminator, create_generator, train_gan
 
 scaler = None
 columns = None

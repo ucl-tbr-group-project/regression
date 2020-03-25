@@ -9,13 +9,13 @@ setup(
                       'pandas', 'scikit-learn', 'keras', 'pyqt5', 'joblib'],
     entry_points={
         'console_scripts': [
-            'tbr_train = tbr_reg.run_training:main',
-            'tbr_ae = tbr_reg.run_autoencoder:main',
-            'tbr_split = tbr_reg.run_split_batches:main',
-            'tbr_eval = tbr_reg.run_evaluation:main',
-            'tbr_search = tbr_reg.run_search:main'
+            'tbr_train = tbr_reg.endpoints.training:main',
+            'tbr_ae = tbr_reg.endpoints.autoencoder:main',
+            'tbr_split = tbr_reg.endpoints.split_batches:main',
+            'tbr_eval = tbr_reg.endpoints.evaluation:main',
+            'tbr_search = tbr_reg.endpoints.search:main'
         ],
         'gui_scripts': [
-            'tbr_visualizer = tbr_reg.visualizer:main'
+            'tbr_visualizer = tbr_reg.endpoints.visualizer:main'
         ]}
 )

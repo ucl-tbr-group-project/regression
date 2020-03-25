@@ -6,10 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
 import ATE
-from .data_utils import load_batches, encode_data_frame, x_y_split
-from .plot_utils import set_plotting_style
-from .plot_reg_performance import plot_reg_performance
-from .model_loader import get_model_factory, load_model_from_file
+from ..data_utils import load_batches, encode_data_frame, x_y_split
+from ..plot_utils import set_plotting_style
+from ..plot_reg_performance import plot_reg_performance
+from ..model_loader import get_model_factory, load_model_from_file
 
 
 def main():
