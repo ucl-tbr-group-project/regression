@@ -58,17 +58,15 @@ def main():
     scores = grid_search(X, y, args.k_folds, random_state,
                          model_space, model_creator, args.out_dir)
 
-    scores.to_csv(os.path.join(args.out_dir, 'grid_search.csv'))
-
     print('Done.')
 
 
 def prepare_model_domain():
-    model_type = 'krg'
+    model_type = 'svm'
     creator = get_model_factory()[model_type]
     search_space = {
-        'poly': ['constant', 'linear', 'quadratic'],
-        'theta0': [0.01, 0.02, 0.05],
+        'degree': (3, 10, 8),
+        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
     }
 
     return creator, search_space
@@ -92,6 +90,8 @@ def model_space_product(model_space):
 
 
 def grid_search(X, y, k_folds, random_state, model_space, model_creator, out_dir):
+    out_file = os.path.join(out_dir, 'grid_search.csv')
+
     data = {column: [] for column in model_space.keys()}
     data['mean_score'] = []
     for i in range(k_folds):
@@ -107,31 +107,46 @@ def grid_search(X, y, k_folds, random_state, model_space, model_creator, out_dir
         if os.path.exists(model_dir):
             print('WARNING: path "%s" exists, deleting previous contents' % model_dir)
             os.removedirs(model_dir)
-            os.rmdir(model_dir)
 
         os.makedirs(model_dir)
 
         # run evaluation
         model = model_creator(arg_dict=model_args)
-        model_scores, model_mean_scores = evaluate_model(
+        model_scores, model_mean_score = evaluate_model(
             model, model_dir, X, y, k_folds, random_state + model_idx)
 
         # rename output directory to include model score
         new_model_dir = os.path.join(
-            out_dir, '%04d_%0.06f' % (model_idx, model_mean_scores[0, 0]))
+            out_dir, '%04d_%0.06f' % (model_idx, model_mean_score))
+
+        if os.path.exists(new_model_dir):
+            print('WARNING: path "%s" exists, deleting previous contents' %
+                  new_model_dir)
+            os.removedirs(new_model_dir)
+
         os.rename(model_dir, new_model_dir)
 
         # save scores
         for name, value in model_args.items():
             data[name].append(value)
 
-        data['mean_score'].append(model_mean_scores)
+        data['mean_score'].append(model_mean_score)
         for i in range(k_folds):
             data['score%d' % i].append(model_scores[i])
 
+        if model_idx % 5 == 0:
+            print(
+                f'Saving checkpoint: writing {model_idx+1} results to {out_file}')
+            scores = pd.DataFrame(data=data)
+            scores.to_csv(out_file)
+
         model_idx += 1
 
-    return pd.DataFrame(data=data)
+    print(f'Writing {model_idx+1} results to {out_file}')
+    scores = pd.DataFrame(data=data)
+    scores.to_csv(out_file)
+
+    return scores
 
 
 def evaluate_model(model, model_dir, X, y, k_folds, random_state):
@@ -161,14 +176,14 @@ def evaluate_model(model, model_dir, X, y, k_folds, random_state):
 
     if len(kfold_scores) == 0:
         # all folds failed
-        return np.nan * np.ones((k_folds, 1)), np.nan * np.ones((1, 1))
+        return np.nan * np.ones((k_folds, 1)), np.nan
 
     kfold_scores_arr = np.array(kfold_scores)
     kfold_scores_mean = np.mean(kfold_scores_arr, axis=0)
     print('K-fold mean scores are: %f' % kfold_scores_mean)
 
-    if isinstance(kfold_scores_mean, float):
-        kfold_scores_mean = np.array([[kfold_scores_mean]])
+    if not isinstance(kfold_scores_mean, float):
+        kfold_scores_mean = kfold_scores_mean[0]
 
     return kfold_scores_arr, kfold_scores_mean
 
@@ -201,6 +216,8 @@ def plot(save_plot_path, model, X_test, y_test):
     else:
         plt.savefig('%s.png' % save_plot_path)
         plt.savefig('%s.pdf' % save_plot_path)
+
+    plt.close()
 
 
 if __name__ == '__main__':
