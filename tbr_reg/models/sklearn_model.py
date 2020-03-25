@@ -25,6 +25,8 @@ class SKLearnModel(RegressionModel):
         self.out_scaler_file = out_scaler_file
         self.out_model_file = out_model_file
 
+        self.extension = extension
+
         self.sklearn_model = None
 
     @staticmethod

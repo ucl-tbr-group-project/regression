@@ -3,6 +3,22 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from .sklearn_model import SKLearnModel
 
 
+class GaussianProcessFactory:
+    def __init__(self):
+        self.extension = GaussianProcessModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return GaussianProcessModel(**GaussianProcessModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return GaussianProcessModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class GaussianProcessModel(SKLearnModel):
     '''A Gaussian process regressor, implemented by SciKit.'''
 

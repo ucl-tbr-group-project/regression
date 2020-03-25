@@ -11,6 +11,41 @@ from sklearn.metrics import mean_absolute_error
 from .basic_model import RegressionModel
 
 
+class NeuralNetworkSavedModelFactory:
+    def __init__(self):
+        self.extension = 'nn'
+
+    def get_suffix(self):
+        return '.%s.h5' % self.extension
+
+    def init_model(self, args):
+        return NeuralNetworkModel(**NeuralNetworkModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return NeuralNetworkModel.load(
+            model='%s.%s.h5' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
+class NeuralNetworkCheckpointFactory:
+    def __init__(self):
+        self.extension = 'nncp'
+
+    def get_suffix(self):
+        return '.%s.h5' % self.extension
+
+    def init_model(self, args):
+        return NeuralNetworkModel(**NeuralNetworkModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        fname_without_util = os.path.join(os.path.dirname(
+            fname), os.path.basename(fname).split('.')[0])
+        return NeuralNetworkModel.load(
+            weights='%s.%s.h5' % (fname, self.extension),
+            arch='%s.arch.yml' % fname_without_util,
+            scaler='%s.scaler.pkl' % fname_without_util)
+
+
 class NeuralNetworkModel(RegressionModel):
     '''A feed-forward multi-layer neural network implemented with Keras.'''
 

@@ -3,6 +3,22 @@ from sklearn.ensemble import RandomForestRegressor
 from .sklearn_model import SKLearnModel
 
 
+class RandomForestFactory:
+    def __init__(self):
+        self.extension = RandomForestModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return RandomForestModel(**RandomForestModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return RandomForestModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class RandomForestModel(SKLearnModel):
     '''A random forest ensemble regressor, implemented by SciKit.'''
 

@@ -3,6 +3,22 @@ from sklearn.linear_model import SGDRegressor
 from .sklearn_poly_model import SKLearnPolyModel
 
 
+class SGDFactory:
+    def __init__(self):
+        self.extension = SGDModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return SGDModel(**SGDModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return SGDModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class SGDModel(SKLearnPolyModel):
     '''Stochastic gradient descent with polynomial features, implemented by SciKit.'''
 

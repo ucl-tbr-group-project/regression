@@ -3,6 +3,22 @@ from sklearn.svm import SVR
 from .sklearn_model import SKLearnModel
 
 
+class SupportVectorFactory:
+    def __init__(self):
+        self.extension = SupportVectorModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return SupportVectorModel(**SupportVectorModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return SupportVectorModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class SupportVectorModel(SKLearnModel):
     '''A support vector machine with kernel trick, implemented by SciKit.'''
 

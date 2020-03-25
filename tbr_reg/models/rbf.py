@@ -4,6 +4,22 @@ from smt.surrogate_models import RBF
 from .smt_model import SMTModel
 
 
+class RBFFactory:
+    def __init__(self):
+        self.extension = RBFModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return RBFModel(**RBFModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return RBFModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class RBFModel(SMTModel):
     '''Radial basis functions model, implemented by SMT.'''
 

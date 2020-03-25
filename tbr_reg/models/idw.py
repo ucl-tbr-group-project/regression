@@ -3,6 +3,22 @@ from smt.surrogate_models import IDW
 from .smt_model import SMTModel
 
 
+class IDWFactory:
+    def __init__(self):
+        self.extension = IDWModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return IDWModel(**IDWModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return IDWModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class IDWModel(SMTModel):
     '''Inverse distance weighting model, implemented by SMT.'''
 

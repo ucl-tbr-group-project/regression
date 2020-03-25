@@ -3,6 +3,22 @@ from sklearn.neighbors import KNeighborsRegressor
 from .sklearn_model import SKLearnModel
 
 
+class NearestNeighboursFactory:
+    def __init__(self):
+        self.extension = NearestNeighboursModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return NearestNeighboursModel(**NearestNeighboursModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return NearestNeighboursModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class NearestNeighboursModel(SKLearnModel):
     '''A k-nearest neighbours regressor, implemented by SciKit.'''
 

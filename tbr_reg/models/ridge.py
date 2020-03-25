@@ -3,6 +3,22 @@ from sklearn.linear_model import Ridge
 from .sklearn_poly_model import SKLearnPolyModel
 
 
+class RidgeFactory:
+    def __init__(self):
+        self.extension = RidgeModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return RidgeModel(**RidgeModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return RidgeModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class RidgeModel(SKLearnPolyModel):
     '''Ridge regression with polynomial features, implemented by SciKit.'''
 

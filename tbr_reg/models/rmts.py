@@ -3,6 +3,22 @@ from smt.surrogate_models import RMTB, RMTC
 from .smt_model import SMTModel
 
 
+class RMTSFactory:
+    def __init__(self):
+        self.extension = RMTSModel().extension
+
+    def get_suffix(self):
+        return '.%s.pkl' % self.extension
+
+    def init_model(self, args):
+        return RMTSModel(**RMTSModel.parse_cli_args(args))
+
+    def load_model(self, fname):
+        return RMTSModel.load(
+            '%s.%s.pkl' % (fname, self.extension),
+            scaler='%s.scaler.pkl' % fname)
+
+
 class RMTSModel(SMTModel):
     '''Regularized minimal-energy tensor-product splines model, implemented by SMT.'''
 
