@@ -1,0 +1,5 @@
+model_type: 'knn'
+search_space:
+    n_neighbors: !!python/tuple [3, 15, 5, 'i']
+    weights: ['uniform', 'distance']
+    p: !!python/tuple [2, 10, 5, 'f']
