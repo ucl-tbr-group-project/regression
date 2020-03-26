@@ -12,6 +12,10 @@ def main():
     # parse args
     parser = argparse.ArgumentParser(description='Evaluate TBR model search parameters')
     parser.add_argument('dirs', nargs='+')
+    parser.add_argument('--performance-metric', type=str, default='r2',
+                        help='metric for evaluating regression performance, supported values: "r2" (default), "mae", "adjusted_r2", "std_error"')
+    parser.add_argument('--n-top-models', type=int, default=5,
+                        help='how many best models to display')
     args = parser.parse_args()
 
     model_dict = {}
@@ -19,14 +23,13 @@ def main():
         dir_label, dir_name = args.dirs[i], args.dirs[i + 1]
         model_dict[dir_label] = pd.read_csv(os.path.join(dir_name, 'search.csv'))
 
-    plot_metric = 'r2'
-    metric = get_metric_factory()[plot_metric]()
+    metric = get_metric_factory()[args.performance_metric]()
 
     set_plotting_style()
 
     fig, ax = plot_reg_vs_time(model_dict,
         performance_axis='mean_metric_%s' % metric.id, performance_axis_label='Regression performance ($%s$)' % metric.latex_name,
-        select_top_n=10)
+        select_top_n=args.n_top_models)
 
     plt.tight_layout()
     plt.show()
