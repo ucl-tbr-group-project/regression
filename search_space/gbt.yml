@@ -1,0 +1,13 @@
+model_type: 'gbt'
+search_space:
+    loss: ['ls', 'lad', 'huber', 'quantile']
+    learning_rate: !!python/tuple [0.001, 0.5, 10, 'f']
+    n_estimators: !!python/tuple [10, 500, 20, 'i']
+    subsample: !!python/tuple [0.5, 1, 10, 'f']
+    criterion: ['friedman_mse', 'mse', 'mae']
+    min_samples_split: !!python/tuple [2, 20, 10, 'i']
+    min_samples_leaf: !!python/tuple [1, 20, 10, 'i']
+    min_weight_fraction_leaf: !!python/tuple [0, 0.2, 5, 'f']
+    min_impurity_decrease: !!python/tuple [0, 0.2, 5, 'f']
+    alpha: !!python/tuple [0.5, 0.999, 5, 'f']
+    ccp_alpha: !!python/tuple [0, 0.2, 5, 'f']
