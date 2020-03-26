@@ -15,7 +15,7 @@ class MAE(RegressionMetric):
     '''Mean absolute error, implemented by SciKit.'''
 
     def __init__(self):
-        RegressionMetric.__init__(self, 'MAE', 'mae')
+        RegressionMetric.__init__(self, 'MAE', '{\\rm MAE}', 'mae')
 
     def evaluate(self, X, y_test, y_pred):
         return mean_absolute_error(y_test, y_pred)
