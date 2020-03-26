@@ -4,6 +4,9 @@ def create_factories():
     from .metrics.mae import MAEFactory
     factories.append(MAEFactory())
 
+    from .metrics.std_error import StandardErrorFactory
+    factories.append(StandardErrorFactory())
+
     from .metrics.r2 import R2Factory
     factories.append(R2Factory())
 
