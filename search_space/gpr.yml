@@ -1,0 +1,4 @@
+model_type: 'gpr'
+search_space:
+    alpha: !!python/tuple [1.0e-10, 1.0e-5, 5, 'f']
+    n_restarts_optimizer: !!python/tuple [0, 10, 5, 'i']
