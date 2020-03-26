@@ -25,8 +25,9 @@ def grid_search(X, y, k_folds, random_state, model_space, model_creator, metric,
             model_idx, model_creator, model_args, X, y, k_folds, random_state + model_idx)
 
         # save scores
-        for name, value in model_args.items():
-            data[name].append(value)
+        for arg_name in data.keys():
+            if arg_name in model_args:
+                data[arg_name].append(model_args[arg_name])
 
         for column, value in extra_values.items():
             data[column].append(value)

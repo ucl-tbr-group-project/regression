@@ -24,6 +24,7 @@ def model_space_product(model_space):
 
     product_args = []
     product_input = []
+    is_integer = []
 
     for name, values in model_space.items():
         product_args.append(name)
@@ -31,8 +32,11 @@ def model_space_product(model_space):
         if isinstance(values, tuple):  # linear subspace
             low, high, n_steps, value_type = values
             product_input.append(np.linspace(low, high, n_steps).tolist())
+            is_integer.append(value_type == 'i')
         else:  # exhaustive list of options
             product_input.append(values)
+            is_integer.append(False)
 
     for arg_values in itertools.product(*product_input):
-        yield {name: value for name, value in zip(product_args, arg_values)}
+        yield {name: (int(value) if should_quantize else value)
+               for name, value, should_quantize in zip(product_args, arg_values, is_integer)}
