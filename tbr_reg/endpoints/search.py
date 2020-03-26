@@ -1,4 +1,5 @@
 import os
+import time
 import sys
 import argparse
 import yaml
@@ -80,6 +81,9 @@ def main():
     for some_metric in all_metrics:
         extra_columns += ['metric_%s%d' % (some_metric.id, i) for i in range(args.k_folds)]
         extra_columns.append('mean_metric_%s' % some_metric.id)
+    extra_columns += ['mean_time_train', 'mean_time_pred']
+    extra_columns += ['time_train%d' % i for i in range(args.k_folds)]
+    extra_columns += ['time_pred%d' % i for i in range(args.k_folds)]
 
     model_type = search_space_dict['model_type']
     model_creator = get_model_factory()[model_type]
@@ -128,12 +132,15 @@ def main():
 
             try:
                 model = model_creator(arg_dict=fold_args)
-                train(model, X_train, y_train)
-                evaluations = test(model, X_test, y_test, all_metrics)
+                train_time = train(model, X_train, y_train)
+                evaluations, pred_time = test(model, X_test, y_test, all_metrics)
                 kfold_scores.append(evaluations[metric.id])
 
                 for metric_id, value in evaluations.items():
                     extra_values['metric_%s%d' % (metric_id, fold_idx)] = value
+
+                extra_values['time_train%d' % fold_idx] = train_time
+                extra_values['time_pred%d' % fold_idx] = pred_time
 
                 plot_perf_path = os.path.join(
                     get_model_dir(model_idx), 'fold%d' % fold_idx)
@@ -159,6 +166,12 @@ def main():
             extra_values['mean_metric_%s' % some_metric.id] = \
                 np.mean(np.array([extra_values['metric_%s%d' % (some_metric.id, i)]
                                   for i in range(k_folds)]))
+        extra_values['mean_time_train'] = \
+            np.mean(np.array([extra_values['time_train%d' % i]
+                              for i in range(k_folds)]))
+        extra_values['mean_time_pred'] = \
+            np.mean(np.array([extra_values['time_pred%d' % i]
+                              for i in range(k_folds)]))
 
         return kfold_scores_arr, kfold_scores_mean, extra_values
 
@@ -222,12 +235,18 @@ def main():
 
 def train(model, X_train, y_train):
     print(f'Training regressor on set of size {X_train.shape[0]}')
+    tic = time.time()
     model.train(X_train.to_numpy(), y_train.to_numpy())
+    toc = time.time()
+    return toc - tic
 
 
 def test(model, X_test, y_test, metrics):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
+    tic = time.time()
     y_pred = model.predict(X_test.to_numpy())
+    toc = time.time()
+
     y_test = y_test.to_numpy()
 
     evaluations = {}
@@ -236,7 +255,7 @@ def test(model, X_test, y_test, metrics):
         print(
             f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
         evaluations[metric.id] = evaluation
-    return evaluations
+    return evaluations, (toc - tic)
 
 
 def plot(save_plot_path, model, X_test, y_test):
