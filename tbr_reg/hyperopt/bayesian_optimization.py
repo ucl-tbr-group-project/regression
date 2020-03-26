@@ -25,9 +25,9 @@ def model_space_to_dims(model_space):
 
 def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator, metric,
                           evaluation_handler, args_handler=None, post_evaluation_handler=None,
-                          n_iterations=200):
+                          n_iterations=200, random_state=0):
     dim_names, dims = model_space_to_dims(model_space)
-    opt = Optimizer(dims)
+    opt = Optimizer(dims, random_state=random_state)
 
     data = {column: [] for column in model_space.keys()}
     data['mean_score'] = []
