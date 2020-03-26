@@ -46,7 +46,7 @@ def main():
     parser.add_argument('--k-folds', type=int, default=5,
                         help='k for k-fold cross-validation')
     parser.add_argument('--score', type=str, default='r2',
-                        help='metric for model quality evaluation, supported values: "r2" (default), "mae", "adjusted_r2"')
+                        help='metric for model quality evaluation, supported values: "r2" (default), "mae", "adjusted_r2", "std_error"')
     parser.add_argument('--strategy', type=str, default='grid',
                         help='algorithm used for search, supported values: "grid" (default), "bayesian"')
     parser.add_argument('--keep-unimproved', default=False, action='store_true',
