@@ -8,7 +8,7 @@ setup(
     install_requires=['numpy', 'matplotlib',
                       'pandas', 'scikit-learn',
                       'keras', 'pyqt5', 'joblib',
-                      'scikit-optimize'],
+                      'scikit-optimize', 'smt'],
     entry_points={
         'console_scripts': [
             'tbr_train = tbr_reg.endpoints.training:main',
