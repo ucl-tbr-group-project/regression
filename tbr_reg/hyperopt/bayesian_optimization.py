@@ -25,7 +25,7 @@ def model_space_to_dims(model_space):
 
 def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator, metric,
                           evaluation_handler, args_handler=None, post_evaluation_handler=None,
-                          n_iterations=200, extra_columns=[]):
+                          n_iterations=9999, extra_columns=[]):
     dim_names, dims = model_space_to_dims(model_space)
     opt = Optimizer(dims, random_state=random_state)
 
