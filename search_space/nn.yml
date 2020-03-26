@@ -1,0 +1,43 @@
+model_type: 'nn'
+search_space:
+    epochs: !!python/tuple [100, 500, 10, 'i']
+    arch_type: 
+        - 1H_3F_4
+        - 1H_3F_8
+        - 1H_3F_16
+        - 1H_3F_32
+        - 1H_3F_64
+        - 1H_3F_128
+        - 1H_3F_256
+        - 1F_4
+        - 1F_8
+        - 1F_16
+        - 1F_32
+        - 1F_64
+        - 2F_4
+        - 2F_8
+        - 2F_16
+        - 2F_32
+        - 2F_64
+        - 4F_4
+        - 4F_8
+        - 4F_16
+        - 4F_32
+        - 4F_64
+        - 8F_4
+        - 8F_8
+        - 8F_16
+        - 8F_32
+        - 8F_64
+        - 3pyramid_32
+        - 3pyramid_64
+        - 3pyramid_128
+        - 3pyramid_256
+        - 6pump_32
+        - 6pump_64
+        - 6pump_128
+        - 6pump_256
+        - 3diamond_32
+        - 3diamond_64
+        - 3diamond_128
+        - 3diamond_256
