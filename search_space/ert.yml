@@ -1,0 +1,9 @@
+model_type: 'ert'
+search_space:
+    n_estimators: !!python/tuple [10, 500, 20, 'i']
+    criterion: ['mse', 'mae']
+    min_samples_split: !!python/tuple [2, 20, 10, 'i']
+    min_samples_leaf: !!python/tuple [1, 20, 10, 'i']
+    min_weight_fraction_leaf: !!python/tuple [0, 0.2, 5, 'f']
+    min_impurity_decrease: !!python/tuple [0, 0.2, 5, 'f']
+    ccp_alpha: !!python/tuple [0, 0.2, 5, 'f']
