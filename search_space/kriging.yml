@@ -1,0 +1,6 @@
+model_type: 'krg'
+search_space:
+    flavour: ['plain', 'pls', 'plsk']
+    poly: ['constant', 'linear', 'quadratic']
+    corr: ['abs_exp', 'squar_exp']
+    extra_points: !!python/tuple [0, 5, 10, 'i']
