@@ -103,8 +103,12 @@ where:
  - `batch_start` and `batch_end` is range of batch file indices to use,
  - `out_dir` is path to output (writable) directory (warning: may be overwritten if not empty!)
  - `search_space_config` is path a YAML file that determines the model and the searched subspace of its hyperparameter domain (see [the `./search_space` directory](./search_space) for examples corresponding to various models)
- - `--feature_def`, if provided, is a name of a file containing a line-separated list of features to include,
- - `--k-folds`, if provided, is overriding nnumber of folds used for cross-validation (defaults to 5)
+ - `--feature-def`, if provided, is a name of a file containing a line-separated list of features to include,
+ - `--k-folds`, if provided, is number of folds used for cross-validation (defaults to 5),
+ - `--score`, if provided, is choice of metric to optimize against (defaults to "r2", can be either "mae", "r2" or "adjusted_r2"),
+ - `--strategy`, if provided, is sampling strategy for hyperparamter optimization (defaults to "grid", can be either "grid" or "bayesian"),
+ - `--keep-unimproved` enables saving model directories corresponding to models that are worse than the last best model encountered (off to save space by default),
+ - `--keep-trained-models`, enables saving pickled models in addition to performance plots (off to save space by default).
 
 
 License
