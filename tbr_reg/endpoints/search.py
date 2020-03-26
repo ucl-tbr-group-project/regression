@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import yaml
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -44,6 +45,8 @@ def main():
                         help='metric for model quality evaluation, supported values: "r2" (default), "mae"')
     parser.add_argument('--strategy', type=str, default='grid',
                         help='algorithm used for search, supported values: "grid" (default), "bayesian"')
+    parser.add_argument('--keep-unimproved', default=False, action='store_true',
+                        help='do not clean up model directories with no accuracy improvement')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -72,6 +75,8 @@ def main():
     model_creator = get_model_factory()[model_type]
     model_space = search_space_dict['search_space']
 
+    best_score_so_far = None
+
     def get_model_dir(model_idx):
         return os.path.join(args.out_dir, '%04d_running' % model_idx)
 
@@ -88,7 +93,7 @@ def main():
         # prepare output directory
         if os.path.exists(model_dir):
             print('WARNING: path "%s" exists, deleting previous contents' % model_dir)
-            os.removedirs(model_dir)
+            shutil.rmtree(model_dir)
 
         os.makedirs(model_dir)
         return model_args
@@ -134,21 +139,33 @@ def main():
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
         if model_idx >= 0:
-            # rename output directory to include model score
             model_dir = get_model_dir(model_idx)
-            new_model_dir = get_new_model_dir(model_idx, model_mean_score)
+            model_improved = best_score_so_far is None or \
+                metric.rank(model_mean_score) < metric.rank(best_score_so_far)
+            keep_model_dir = args.keep_unimproved or model_improved
 
-            if os.path.exists(new_model_dir):
-                print('WARNING: path "%s" exists, deleting previous contents' %
-                      new_model_dir)
-                os.removedirs(new_model_dir)
+            if model_improved:
+                # update best_score
+                best_score_so_far = model_mean_score
 
-            os.rename(model_dir, new_model_dir)
+            if keep_model_dir:
+                # rename output directory to include model score
+                new_model_dir = get_new_model_dir(model_idx, model_mean_score)
+
+                if os.path.exists(new_model_dir):
+                    print('WARNING: path "%s" exists, deleting previous contents' %
+                          new_model_dir)
+                    shutil.rmtree(new_model_dir)
+
+                os.rename(model_dir, new_model_dir)
+            else:
+                # get rid of model directory
+                shutil.rmtree(model_dir)
 
         # save checkpoint
         if model_idx < 0 or model_idx % 5 == 0:
             out_file = get_output_file()
-            print(f'Writing {model_idx+1} results to {out_file}')
+            print(f'Writing {np.abs(model_idx)+1} results to {out_file}')
             scores = pd.DataFrame(data=data)
             scores.to_csv(out_file)
 
