@@ -75,6 +75,11 @@ def main():
         search_space_dict = yaml.load(f.read())
 
     metric = get_metric_factory()[args.score]()
+    all_metrics = [init_metric() for init_metric in get_metric_factory().values()]
+    extra_columns = []
+    for some_metric in all_metrics:
+        extra_columns += ['metric_%s%d' % (some_metric.id, i) for i in range(args.k_folds)]
+        extra_columns.append('mean_metric_%s' % some_metric.id)
 
     model_type = search_space_dict['model_type']
     model_creator = get_model_factory()[model_type]
@@ -109,6 +114,7 @@ def main():
         kfold = KFold(n_splits=k_folds, shuffle=True,
                       random_state=random_state)
         kfold_scores = []
+        extra_values = {column:[] for column in extra_columns}
 
         fold_idx = 0
         for train_index, test_index in kfold.split(X, y):
@@ -123,8 +129,11 @@ def main():
             try:
                 model = model_creator(arg_dict=fold_args)
                 train(model, X_train, y_train)
-                evaluation = test(model, X_test, y_test, metric=metric)
-                kfold_scores.append(evaluation)
+                evaluations = test(model, X_test, y_test, all_metrics)
+                kfold_scores.append(evaluations[metric.id])
+
+                for metric_id, value in evaluations.items():
+                    extra_values['metric_%s%d' % (metric_id, fold_idx)] = value
 
                 plot_perf_path = os.path.join(
                     get_model_dir(model_idx), 'fold%d' % fold_idx)
@@ -138,16 +147,20 @@ def main():
 
         if len(kfold_scores) == 0:
             # all folds failed
-            return np.nan * np.ones((k_folds, 1)), np.nan
+            return np.nan * np.ones((k_folds, 1)), np.nan, extra_values
 
         kfold_scores_arr = np.array(kfold_scores)
         kfold_scores_mean = np.mean(kfold_scores_arr, axis=0)
         print('K-fold mean scores are: %f' % kfold_scores_mean)
-
         if not isinstance(kfold_scores_mean, float):
             kfold_scores_mean = kfold_scores_mean[0]
 
-        return kfold_scores_arr, kfold_scores_mean
+        for some_metric in all_metrics:
+            extra_values['mean_metric_%s' % some_metric.id] = \
+                np.mean(np.array([extra_values['metric_%s%d' % (some_metric.id, i)]
+                                  for i in range(k_folds)]))
+
+        return kfold_scores_arr, kfold_scores_mean, extra_values
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
         global best_score_so_far
@@ -191,7 +204,8 @@ def main():
         raise ValueError(f'Unknown search strategy "{args.search_strategy}"')
 
     scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator, metric,
-                              evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler)
+                              evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler,
+                              extra_columns=extra_columns)
 
     print('Search completed.')
     print('=====================================================')
@@ -211,15 +225,18 @@ def train(model, X_train, y_train):
     model.train(X_train.to_numpy(), y_train.to_numpy())
 
 
-def test(model, X_test, y_test, metric):
+def test(model, X_test, y_test, metrics):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
     y_pred = model.predict(X_test.to_numpy())
     y_test = y_test.to_numpy()
 
-    evaluation = metric.evaluate(X_test, y_test, y_pred)
-    print(
-        f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
-    return evaluation
+    evaluations = {}
+    for metric in metrics:
+        evaluation = metric.evaluate(X_test, y_test, y_pred)
+        print(
+            f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
+        evaluations[metric.id] = evaluation
+    return evaluations
 
 
 def plot(save_plot_path, model, X_test, y_test):
