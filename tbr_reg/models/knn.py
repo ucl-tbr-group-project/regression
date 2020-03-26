@@ -59,10 +59,10 @@ class NearestNeighboursModel(SKLearnModel):
     def parse_cli_args(args):
         parser = SKLearnModel.create_cli_parser('Train k-nearest neighbours')
 
-        parser.add_argument('--n_neighbors', type=int)
+        parser.add_argument('--n-neighbors', type=int)
         parser.add_argument('--weights', type=str)
         parser.add_argument('--algorithm', type=str)
-        parser.add_argument('--leaf_size', type=int)
+        parser.add_argument('--leaf-size', type=int)
         parser.add_argument('--p', type=int)
         parser.add_argument('--metric', type=str)
 
