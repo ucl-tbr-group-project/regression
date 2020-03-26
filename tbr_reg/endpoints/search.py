@@ -18,6 +18,9 @@ from ..hyperopt.bayesian_optimization import bayesian_optimization
 from ..metric_loader import get_metric_factory
 
 
+best_score_so_far = None
+
+
 def main():
     '''Main command line entry point. Trains model with given parameters.'''
 
@@ -47,6 +50,8 @@ def main():
                         help='algorithm used for search, supported values: "grid" (default), "bayesian"')
     parser.add_argument('--keep-unimproved', default=False, action='store_true',
                         help='do not clean up model directories with no accuracy improvement')
+    parser.add_argument('--keep-trained-models', default=False, action='store_true',
+                        help='save model files for each checkpoint')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -75,8 +80,6 @@ def main():
     model_creator = get_model_factory()[model_type]
     model_space = search_space_dict['search_space']
 
-    best_score_so_far = None
-
     def get_model_dir(model_idx):
         return os.path.join(args.out_dir, '%04d_running' % model_idx)
 
@@ -94,11 +97,15 @@ def main():
         if os.path.exists(model_dir):
             print('WARNING: path "%s" exists, deleting previous contents' % model_dir)
             shutil.rmtree(model_dir)
-
         os.makedirs(model_dir)
+
+        # set output directory for model
+        if args.keep_trained_models:
+            model_args['out'] = os.path.join(model_dir, 'fold%d')
+
         return model_args
 
-    def evaluation_handler(model_idx, model, X, y, k_folds, random_state):
+    def evaluation_handler(model_idx, model_creator, model_args, X, y, k_folds, random_state):
         kfold = KFold(n_splits=k_folds, shuffle=True,
                       random_state=random_state)
         kfold_scores = []
@@ -109,7 +116,12 @@ def main():
             X_train, X_test = X.iloc[train_index], X.iloc[test_index]
             y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
+            fold_args = dict(model_args)
+            if 'out' in fold_args:
+                fold_args['out'] = fold_args['out'] % fold_idx
+
             try:
+                model = model_creator(arg_dict=fold_args)
                 train(model, X_train, y_train)
                 evaluation = test(model, X_test, y_test, metric=metric)
                 kfold_scores.append(evaluation)
@@ -138,6 +150,8 @@ def main():
         return kfold_scores_arr, kfold_scores_mean
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
+        global best_score_so_far
+
         if model_idx >= 0:
             model_dir = get_model_dir(model_idx)
             model_improved = best_score_so_far is None or \

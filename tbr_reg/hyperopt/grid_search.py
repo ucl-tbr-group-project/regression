@@ -18,9 +18,8 @@ def grid_search(X, y, k_folds, random_state, model_space, model_creator, metric,
             model_args = args_handler(model_idx, model_args)
 
         # run evaluation
-        model = model_creator(arg_dict=model_args)
         model_scores, model_mean_score = evaluation_handler(
-            model_idx, model, X, y, k_folds, random_state + model_idx)
+            model_idx, model_creator, model_args, X, y, k_folds, random_state + model_idx)
 
         # save scores
         for name, value in model_args.items():

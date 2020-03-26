@@ -44,13 +44,13 @@ def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creato
             model_args = args_handler(model_idx, model_args)
 
         # run evaluation
-        model = model_creator(arg_dict=model_args)
         model_scores, model_mean_score = evaluation_handler(
-            model_idx, model, X, y, k_folds, random_state + model_idx)
+            model_idx, model_creator, model_args, X, y, k_folds, random_state + model_idx)
 
         # save scores
-        for name, value in model_args.items():
-            data[name].append(value)
+        for arg_name in data.keys():
+            if arg_name in model_args:
+                data[arg_name].append(model_args[arg_name])
 
         data['mean_score'].append(model_mean_score)
         for i in range(k_folds):
