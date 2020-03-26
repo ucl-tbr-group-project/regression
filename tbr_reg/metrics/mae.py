@@ -17,7 +17,7 @@ class MAE(RegressionMetric):
     def __init__(self):
         RegressionMetric.__init__(self, 'MAE', 'mae')
 
-    def evaluate(self, y_test, y_pred):
+    def evaluate(self, X, y_test, y_pred):
         return mean_absolute_error(y_test, y_pred)
 
     def rank(self, values):

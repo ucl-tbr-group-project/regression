@@ -185,7 +185,7 @@ def test(model, X_test, y_test, metric):
     y_pred = model.predict(X_test.to_numpy())
     y_test = y_test.to_numpy()
 
-    evaluation = metric.evaluate(y_test, y_pred)
+    evaluation = metric.evaluate(X_test, y_test, y_pred)
     print(
         f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
     return evaluation

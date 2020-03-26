@@ -17,7 +17,7 @@ class R2Score(RegressionMetric):
     def __init__(self):
         RegressionMetric.__init__(self, 'R2', 'r2')
 
-    def evaluate(self, y_test, y_pred):
+    def evaluate(self, X, y_test, y_pred):
         return r2_score(y_test, y_pred)
 
     def rank(self, values):

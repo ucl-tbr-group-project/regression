@@ -7,6 +7,9 @@ def create_factories():
     from .metrics.r2 import R2Factory
     factories.append(R2Factory())
 
+    from .metrics.adjusted_r2 import AdjustedR2Factory
+    factories.append(AdjustedR2Factory())
+
     return factories
 
 

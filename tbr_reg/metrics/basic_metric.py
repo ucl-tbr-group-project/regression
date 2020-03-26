@@ -6,7 +6,7 @@ class RegressionMetric:
         self.name = name
         self.id = id
 
-    def evaluate(self, y_test, y_pred):
+    def evaluate(self, X, y_test, y_pred):
         '''Evaluate the metric for multiple predictions, given their corresponding true values.'''
         pass
 
