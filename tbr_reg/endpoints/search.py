@@ -108,6 +108,9 @@ def main():
             shutil.rmtree(model_dir)
         os.makedirs(model_dir)
 
+        with open(os.path.join(model_dir, 'args.yml'), 'w') as f:
+            yaml.dump(model_args, f)
+
         # set output directory for model
         if args.keep_trained_models:
             model_args['out'] = os.path.join(model_dir, 'fold%d')
