@@ -15,6 +15,7 @@ setup(
             'tbr_ae = tbr_reg.endpoints.autoencoder:main',
             'tbr_split = tbr_reg.endpoints.split_batches:main',
             'tbr_eval = tbr_reg.endpoints.evaluation:main',
+            'tbr_eval_ho = tbr_reg.endpoints.evaluation_hyperopt:main',
             'tbr_search = tbr_reg.endpoints.search:main'
         ],
         'gui_scripts': [

@@ -20,6 +20,7 @@ from .model_loader import load_model_from_file
 
 from .plot_params_vs_tbr import plot_params_vs_tbr
 from .plot_reg_performance import plot_reg_performance
+from .plot_reg_vs_time import plot_reg_vs_time
 from .plot_utils import set_plotting_style
 from .plot_utils import density_scatter
 
