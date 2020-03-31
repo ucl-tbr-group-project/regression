@@ -1,4 +1,5 @@
 import os
+import time
 import sys
 import argparse
 import yaml
@@ -45,7 +46,7 @@ def main():
     parser.add_argument('--k-folds', type=int, default=5,
                         help='k for k-fold cross-validation')
     parser.add_argument('--score', type=str, default='r2',
-                        help='metric for model quality evaluation, supported values: "r2" (default), "mae", "adjusted_r2"')
+                        help='metric for model quality evaluation, supported values: "r2" (default), "mae", "adjusted_r2", "std_error"')
     parser.add_argument('--strategy', type=str, default='grid',
                         help='algorithm used for search, supported values: "grid" (default), "bayesian"')
     parser.add_argument('--keep-unimproved', default=False, action='store_true',
@@ -75,6 +76,14 @@ def main():
         search_space_dict = yaml.load(f.read())
 
     metric = get_metric_factory()[args.score]()
+    all_metrics = [init_metric() for init_metric in get_metric_factory().values()]
+    extra_columns = []
+    for some_metric in all_metrics:
+        extra_columns += ['metric_%s%d' % (some_metric.id, i) for i in range(args.k_folds)]
+        extra_columns.append('mean_metric_%s' % some_metric.id)
+    extra_columns += ['mean_time_train', 'mean_time_pred']
+    extra_columns += ['time_train%d' % i for i in range(args.k_folds)]
+    extra_columns += ['time_pred%d' % i for i in range(args.k_folds)]
 
     model_type = search_space_dict['model_type']
     model_creator = get_model_factory()[model_type]
@@ -99,6 +108,9 @@ def main():
             shutil.rmtree(model_dir)
         os.makedirs(model_dir)
 
+        with open(os.path.join(model_dir, 'args'), 'w') as f:
+            f.write(str(model_args))
+
         # set output directory for model
         if args.keep_trained_models:
             model_args['out'] = os.path.join(model_dir, 'fold%d')
@@ -109,6 +121,7 @@ def main():
         kfold = KFold(n_splits=k_folds, shuffle=True,
                       random_state=random_state)
         kfold_scores = []
+        extra_values = {column:[] for column in extra_columns}
 
         fold_idx = 0
         for train_index, test_index in kfold.split(X, y):
@@ -122,9 +135,15 @@ def main():
 
             try:
                 model = model_creator(arg_dict=fold_args)
-                train(model, X_train, y_train)
-                evaluation = test(model, X_test, y_test, metric=metric)
-                kfold_scores.append(evaluation)
+                train_time = train(model, X_train, y_train)
+                evaluations, pred_time = test(model, X_test, y_test, all_metrics)
+                kfold_scores.append(evaluations[metric.id])
+
+                for metric_id, value in evaluations.items():
+                    extra_values['metric_%s%d' % (metric_id, fold_idx)] = value
+
+                extra_values['time_train%d' % fold_idx] = train_time
+                extra_values['time_pred%d' % fold_idx] = pred_time
 
                 plot_perf_path = os.path.join(
                     get_model_dir(model_idx), 'fold%d' % fold_idx)
@@ -138,16 +157,26 @@ def main():
 
         if len(kfold_scores) == 0:
             # all folds failed
-            return np.nan * np.ones((k_folds, 1)), np.nan
+            return np.nan * np.ones((k_folds, 1)), np.nan, extra_values
 
         kfold_scores_arr = np.array(kfold_scores)
         kfold_scores_mean = np.mean(kfold_scores_arr, axis=0)
         print('K-fold mean scores are: %f' % kfold_scores_mean)
-
         if not isinstance(kfold_scores_mean, float):
             kfold_scores_mean = kfold_scores_mean[0]
 
-        return kfold_scores_arr, kfold_scores_mean
+        for some_metric in all_metrics:
+            extra_values['mean_metric_%s' % some_metric.id] = \
+                np.mean(np.array([extra_values['metric_%s%d' % (some_metric.id, i)]
+                                  for i in range(k_folds)]))
+        extra_values['mean_time_train'] = \
+            np.mean(np.array([extra_values['time_train%d' % i]
+                              for i in range(k_folds)]))
+        extra_values['mean_time_pred'] = \
+            np.mean(np.array([extra_values['time_pred%d' % i]
+                              for i in range(k_folds)]))
+
+        return kfold_scores_arr, kfold_scores_mean, extra_values
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
         global best_score_so_far
@@ -191,7 +220,8 @@ def main():
         raise ValueError(f'Unknown search strategy "{args.search_strategy}"')
 
     scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator, metric,
-                              evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler)
+                              evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler,
+                              extra_columns=extra_columns)
 
     print('Search completed.')
     print('=====================================================')
@@ -208,18 +238,27 @@ def main():
 
 def train(model, X_train, y_train):
     print(f'Training regressor on set of size {X_train.shape[0]}')
+    tic = time.time()
     model.train(X_train.to_numpy(), y_train.to_numpy())
+    toc = time.time()
+    return toc - tic
 
 
-def test(model, X_test, y_test, metric):
+def test(model, X_test, y_test, metrics):
     print(f'Testing regressor on set of size {X_test.shape[0]}')
+    tic = time.time()
     y_pred = model.predict(X_test.to_numpy())
+    toc = time.time()
+
     y_test = y_test.to_numpy()
 
-    evaluation = metric.evaluate(X_test, y_test, y_pred)
-    print(
-        f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
-    return evaluation
+    evaluations = {}
+    for metric in metrics:
+        evaluation = metric.evaluate(X_test, y_test, y_pred)
+        print(
+            f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
+        evaluations[metric.id] = evaluation
+    return evaluations, (toc - tic)
 
 
 def plot(save_plot_path, model, X_test, y_test):

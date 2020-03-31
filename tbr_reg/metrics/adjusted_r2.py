@@ -15,7 +15,8 @@ class AdjustedR2Score(RegressionMetric):
     '''Adjusted R2 score, implemented as an extension of the standard SciKit implementation.'''
 
     def __init__(self):
-        RegressionMetric.__init__(self, 'R2(adj)', 'adjusted_r2')
+        RegressionMetric.__init__(
+            self, 'R2(adj)', '{\\rm R}^2_{\\rm adj.}', 'adjusted_r2')
 
     def evaluate(self, X, y_test, y_pred):
         R2 = r2_score(y_test, y_pred)

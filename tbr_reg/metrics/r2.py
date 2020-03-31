@@ -15,7 +15,7 @@ class R2Score(RegressionMetric):
     '''R2 score, implemented by SciKit.'''
 
     def __init__(self):
-        RegressionMetric.__init__(self, 'R2', 'r2')
+        RegressionMetric.__init__(self, 'R2', '{\\rm R}^2', 'r2')
 
     def evaluate(self, X, y_test, y_pred):
         return r2_score(y_test, y_pred)
