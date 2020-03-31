@@ -109,6 +109,19 @@ where:
  - `--strategy`, if provided, is sampling strategy for hyperparamter optimization (defaults to "grid", can be either "grid" or "bayesian"),
  - `--keep-unimproved` enables saving model directories corresponding to models that are worse than the last best model encountered (off to save space by default),
  - `--keep-trained-models`, enables saving pickled models in addition to performance plots (off to save space by default).
+ 
+### Quality-adaptive surrogate sampling
+
+The package exposes the `tbr_qass` command line endpoint to provide adaptive-sampling based training of generic surrogates based on MCMC-style filling of high-need parameter regions.
+See [the implementation](./tbr_reg/endpoints/qass.py) for details. Common usage is as follows:
+
+```bash
+tbr_qass [***]
+```
+
+where:
+
+ - 
 
 
 License

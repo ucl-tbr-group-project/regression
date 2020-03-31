@@ -17,7 +17,7 @@ def main():
 
     random_state = 1
 
-    # parse args
+q    # parse args
     parser = argparse.ArgumentParser(description='Train TBR model')
     parser.add_argument('type', type=str,
                         help='which model to train')
@@ -122,6 +122,8 @@ def plot(save_plot_path, model, X_test, y_test):
 
     fig, ax = plot_reg_performance(df, density_bins=80)
     plt.tight_layout()
+    
+    print(save_plot_path)
 
     if save_plot_path == 'int':
         plt.show()
