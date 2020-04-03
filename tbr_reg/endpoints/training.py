@@ -17,7 +17,7 @@ def main():
 
     random_state = 1
 
-q    # parse args
+    # parse args
     parser = argparse.ArgumentParser(description='Train TBR model')
     parser.add_argument('type', type=str,
                         help='which model to train')
@@ -51,6 +51,7 @@ q    # parse args
             included_features = [line.strip() for line in f.readlines()
                                  if len(line) > 0]
             X = X[included_features].copy()
+    
 
     if args.prev_model != '0':
         prev_model_name, prev_model = load_model_from_file(args.prev_model)

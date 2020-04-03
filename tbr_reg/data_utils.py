@@ -57,6 +57,29 @@ def x_y_split(df, drop_invalid=True):
     return X, y
 
 
+def c_d_split(df, drop_invalid=True):
+    '''
+    Split encoded input data frame into continuous (c) and discrete (d) inputs.
+    '''
+    drop_params = ['sim_time', 'tbr', 'tbr_error', '']
+    d_params = ['firstwall_armour_material',
+                'firstwall_structural_material',
+                'firstwall_coolant_material',
+                'blanket_structural_material',
+                'blanket_breeder_material',
+                'blanket_multiplier_material',
+                'blanket_coolant_material']
+    c_params = list(set(df.columns.tolist()) -
+                    set(drop_params + d_params))
+
+    df_copy = df.copy()
+
+    if drop_invalid:
+        df_copy = df_copy.dropna()
+
+    c, d = df_copy[c_params].copy(), df_copy[d_params].copy()
+    return c, d
+
 def c_d_y_split(df, drop_invalid=True):
     '''
     Split encoded data frame into continuous (c) and discrete (d) inputs, and outputs (y).
