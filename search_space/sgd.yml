@@ -1,0 +1,15 @@
+model_type: 'sgd'
+search_space:
+    loss: ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
+    penalty: ['l2', 'l1', 'elasticnet']
+    alpha: !!python/tuple [0.001, 0.5, 20, 'f']
+    l1_ratio: !!python/tuple [0, 0.1, 20, 'f']
+    fit_intercept: [true, false]
+    epsilon: !!python/tuple [0.1, 0.5, 20, 'f']
+    learning_rate: ['constant', 'optimal', 'invscaling', 'adaptive']
+    eta0: !!python/tuple [0.01, 0.5, 10, 'f']
+    power_t: !!python/tuple [0.1, 0.5, 5, 'f']
+    early_stopping: [true, false]
+    warm_start: [true, false]
+    average: [true, false]
+    degree: !!python/tuple [2, 10, 10, 'i']
