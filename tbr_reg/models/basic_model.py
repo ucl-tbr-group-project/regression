@@ -11,6 +11,7 @@ class RegressionModel:
         '''Initialize model with name.'''
         self.name = name
         self.scaling = scaling
+        self.scaler_fitted = False
 
         scalers = RegressionModel.get_scalers()
         if self.scaling in scalers:
@@ -42,7 +43,13 @@ class RegressionModel:
     def scale_training_set(self, X_train, y_train, out_scaler_file=None):
         if self.scaler is not None:
             Xy_in = self.join_sets(X_train, y_train)
-            Xy_out = self.scaler.fit_transform(Xy_in)
+
+            if not self.scaler_fitted:
+                Xy_out = self.scaler.fit_transform(Xy_in)
+                self.scaler_fitted = True
+            else:
+                Xy_out = self.scaler.transform(Xy_in)
+
             X_train, y_train = self.split_sets(Xy_out)
             if out_scaler_file is not None:
                 joblib.dump(self.scaler, out_scaler_file)

@@ -1,0 +1,6 @@
+model_type: 'ridge'
+search_space:
+    alpha: !!python/tuple [0.001, 10, 20, 'i']
+    fit_intercept: [true, false]
+    solver: ['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga']
+    degree: !!python/tuple [2, 10, 10, 'i']

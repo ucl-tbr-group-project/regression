@@ -228,11 +228,13 @@ class NeuralNetworkModel(RegressionModel):
     def train(self, X_train, y_train):
         X_train, y_train = self.scale_training_set(
             X_train, y_train, out_scaler_file=self.out_scaler_file)
-        self.net = self.create_architecture(X_train.shape[1], self.arch_type)
 
-        if self.out_arch_file is not None:
-            with open(self.out_arch_file, 'w') as f:
-                f.write(self.net.to_yaml())
+        if self.net is None:
+            self.net = self.create_architecture(X_train.shape[1], self.arch_type)
+
+            if self.out_arch_file is not None:
+                with open(self.out_arch_file, 'w') as f:
+                    f.write(self.net.to_yaml())
 
         callbacks_list = []
         if self.out_checkpoint_file is not None:

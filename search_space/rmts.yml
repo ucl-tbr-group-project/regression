@@ -1,0 +1,5 @@
+model_type: 'rmts'
+search_space:
+    flavour: ['bspline', 'cubic']
+    approx_order: !!python/tuple [3, 7, 5, 'i']
+    line_search: ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']

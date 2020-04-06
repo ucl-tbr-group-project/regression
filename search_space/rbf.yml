@@ -1,0 +1,5 @@
+model_type: 'rbf'
+search_space:
+    d0: !!python/tuple [0.1, 10, 100, 'f']
+    poly_degree: [-1, 0, 1]
+    reg: !!python/tuple [0.00000000001, 0.5, 100, 'f']

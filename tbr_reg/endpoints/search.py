@@ -241,7 +241,7 @@ def train(model, X_train, y_train):
     tic = time.time()
     model.train(X_train.to_numpy(), y_train.to_numpy())
     toc = time.time()
-    return toc - tic
+    return (toc - tic) / X_train.shape[0]
 
 
 def test(model, X_test, y_test, metrics):
@@ -258,7 +258,7 @@ def test(model, X_test, y_test, metrics):
         print(
             f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
         evaluations[metric.id] = evaluation
-    return evaluations, (toc - tic)
+    return evaluations, (toc - tic) / X_test.shape[0]
 
 
 def plot(save_plot_path, model, X_test, y_test):

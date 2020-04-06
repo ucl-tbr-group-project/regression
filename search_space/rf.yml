@@ -1,0 +1,16 @@
+model_type: 'rf'
+search_space:
+    n_estimators: !!python/tuple [10, 500, 20, 'i']
+    criterion: ['mse', 'mae']
+    max_depth: !!python/tuple [100, 1000, 100, 'i']
+    min_samples_split: !!python/tuple [2, 20, 10, 'i']
+    min_samples_leaf: !!python/tuple [1, 20, 10, 'i']
+    min_weight_fraction_leaf: !!python/tuple [0, 0.2, 5, 'f']
+    max_features: !!python/tuple [0, 1, 10, 'f']
+    max_leaf_nodes: !!python/tuple [1, 500, 50, 'i']
+    min_impurity_decrease: !!python/tuple [0, 0.2, 5, 'f']
+    bootstrap: [true, false]
+    oob_score: [true, false]
+    warm_start: [true, false]
+    ccp_alpha: !!python/tuple [0, 0.2, 5, 'f']
+    max_samples: !!python/tuple [0, 1, 10, 'f']
