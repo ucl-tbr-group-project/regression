@@ -2,6 +2,7 @@ import sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
@@ -131,7 +132,24 @@ def plot(save_plot_path, model, X_test, y_test):
     else:
         plt.savefig('%s.png' % save_plot_path)
         plt.savefig('%s.pdf' % save_plot_path)
+        
+def plot_results(save_plot_path, y_pred, y_test):
+    df = pd.DataFrame() 
+    df.insert(0, 'tbr', -1.)
+    df.insert(0, 'tbr_pred', -1.)
+    df['tbr'] = y_test
+    df['tbr_pred'] = y_pred
 
+    fig, ax = plot_reg_performance(df, density_bins=80)
+    plt.tight_layout()
+    
+    print(save_plot_path)
+
+    if save_plot_path == 'int':
+        plt.show()
+    else:
+        plt.savefig('%s.png' % save_plot_path)
+        plt.savefig('%s.pdf' % save_plot_path)
 
 if __name__ == '__main__':
     main()

@@ -3,6 +3,9 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
+import pandas as pd
+from scipy import interpolate
+from scipy.spatial import Delaunay
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 
@@ -11,7 +14,7 @@ from ..data_utils import load_batches, encode_data_frame, x_y_split, c_d_y_split
 from ..plot_utils import set_plotting_style
 from ..plot_reg_performance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
-from tbr_reg.endpoints.training import train, test, plot
+from tbr_reg.endpoints.training import train, test, plot, plot_results
 
 
 def main():
@@ -67,23 +70,80 @@ def main():
     samp_size = X.shape[0]
     print(samp_size)
     
+    # Train surrogate for theory and plot
+    
     X_train, X_test, y_train, y_test = train_test_split(X, y, 
                                        test_size=0.5, random_state=1)
                                        
     X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train, 
-                                       test_size=0.5, random_state=1)
+                                       test_size=0.1, random_state=1)
                                        
-    train(thismodel, X_train1, y_train1)
-    train(thismodel, X_train2, y_train2)
-    test(thismodel, X_test, y_test)
-    plot("qassplot", thismodel, X_test, y_test)
-    
     train(thismodel, X_train, y_train)
     test(thismodel, X_test, y_test)
-    plot("qassplot2", thismodel, X_test, y_test)
-        
     
-    print(normalize_c(X_init))
+    plot("qassplot", thismodel, X_test, y_test)
+    
+    
+    # Calculate error data for this training iteration
+    
+    y_train_pred = thismodel.predict(X_train)
+    y_test_pred = thismodel.predict(X_test)
+    
+    train_err = abs(y_train - y_train_pred)
+    test_err = abs(y_test - y_test_pred)
+   
+    
+    
+    # Train surrogate (nearest neighbor interpolator) for error function
+    
+    X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
+                                       test_size=0.5, random_state=1)
+    
+        #errmodel = get_model_factory()["nn"](cli_args=["--epochs=100", "--batch-size=100"
+        #                                              ,"--arch-type=1H_3F_256"])
+        #errmodel = get_model_factory()["idw"](cli_args=["--p=20"])
+                                       
+        #train(errmodel, X_test1, test_err1)
+        #test(errmodel, X_test2, test_err2)
+                                       
+        #tri = Delaunay(X_test1.values, qhull_options="Qc QbB Qx Qz")                 
+        #f = interpolate.LinearNDInterpolator(tri, test_err1.values)                  
+    errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
+    pred_err1 = errordist_test(X_test1.values)    
+    pred_err2 = errordist_test(X_test2.values)
+    
+    errordist = interpolate.NearestNDInterpolator(X_test.values, test_err.values)
+    pred_err = errordist(X_test.values)
+    
+    print('Max error: ' + str(max(test_err.values)))
+    
+    #plot("qassplot2", errmodel, X_test2, test_err2)
+    plot_results("qassplot2", pred_err1, test_err1)
+    plot_results("qassplot3", pred_err2, test_err2) 
+    
+    plt.figure()
+    plt.hist(test_err.values, bins=100)
+    plt.savefig("qassplot4.pdf", format="pdf")   
+    
+    # Perform MCMC on error function
+    
+    saveinterval = 5
+    nburn = 10000
+    nrun = 100000
+    
+    initial_sample = X_train.iloc[0]
+    print(initial_sample.values)
+    print(errordist(initial_sample.values))
+    burnin_sample, burnin_dist, burnin_acceptance = burnin_MH(errordist, initial_sample.values, nburn)
+    saved_samples, saved_dists, run_acceptance = run_MH(errordist, burnin_sample, nrun, saveinterval)
+    
+    print(burnin_acceptance)
+    print(run_acceptance)
+    
+    plt.figure()
+    plt.hist(saved_dists, bins=100)
+    plt.savefig("qassplot5.pdf", format="pdf")  
+
     print('QASS finished.')
 
 
@@ -221,6 +281,69 @@ def normalize_c(c):
     c['blanket_thickness'] /= 500
     c['firstwall_thickness'] /= 20
     return c
+
+def step_MH(errordist, current_sample, dist_current):
+
+    nvar = current_sample.size
+    cov = np.identity(nvar) * 10
+    
+    #print("Current sample:")
+    #print(current_sample)
+    candidate_sample = np.random.multivariate_normal(current_sample, cov)
+    
+    #print("Candidate sample:")
+    #print(candidate_sample)
+
+    dist_candidate = errordist(candidate_sample)
+
+    acceptance_prob = min(1.0,dist_candidate/dist_current); # Metropolos-Hastings acceptance condition
+    accept_rand = np.random.uniform(0,1,1)
+    #print(dist_candidate)
+    #print(dist_current)
+    #print(acceptance_prob)
+    #print(accept_rand)
+    if(accept_rand < acceptance_prob and acceptance_prob>0):
+        #print("Candidate accepted")
+        return candidate_sample, dist_candidate, 1
+    else:
+        #print("Candidate rejected")
+        return current_sample, dist_current, 0
+        
+def burnin_MH(errordist, initial_sample, nburn):
+
+    current_sample = initial_sample
+    dist_current = errordist(current_sample)
+    
+    n_accept = 0
+    
+    for i in range(nburn):
+        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current);  # Run one iteration of Markov Chain
+        n_accept += if_accepted
+        
+    return current_sample, dist_current, n_accept/nburn
+
+def run_MH(errordist, initial_sample, nrun, saveinterval):
+
+    nvar = initial_sample.size
+    current_sample = initial_sample
+    dist_current = errordist(current_sample)
+    
+    n_accept = 0
+    
+    saved_samples = np.empty((0,nvar), float)
+    saved_dists = np.empty((0,1), float)
+    
+    for i in range(nrun):
+        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current);  # Run one iteration of Markov Chain
+        n_accept += if_accepted
+        
+        if if_accepted and n_accept/saveinterval == int(n_accept/saveinterval):
+            saved_samples = np.append(saved_samples, current_sample)
+            saved_dists = np.append(saved_dists, dist_current)
+    
+    return saved_samples, saved_dists, n_accept/nrun
+
+                        
 
 
 
