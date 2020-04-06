@@ -33,6 +33,7 @@ class SGDModel(SKLearnPolyModel):
                  out_scaler_file=None
                  ):
         SKLearnPolyModel.__init__(self, 'Stochastic gradient descent', 'sgd',
+                                  degree=degree,
                                   scaling=scaling,
                                   out=out,
                                   out_model_file=out_model_file,
