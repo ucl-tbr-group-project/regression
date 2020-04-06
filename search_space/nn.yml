@@ -1,6 +1,6 @@
 model_type: 'nn'
 search_space:
-    epochs: !!python/tuple [100, 500, 10, 'i']
+    epochs: [!!python/tuple [100, 5000, 10, 'i']]
     arch_type: 
         - 1H_3F_4
         - 1H_3F_8
