@@ -136,7 +136,8 @@ class RegressionModel:
 
         if self.renormalize and self.scaler_fitted and \
                 self.scaler is not None and alt_scaler is not None:
-            similarity = scaler_similarity(self.scaler, alt_scaler)
+            similarity = RegressionModel.scaler_similarity(
+                self.scaler, alt_scaler)
 
             if similarity < self.renormalization_threshold:
                 print(
