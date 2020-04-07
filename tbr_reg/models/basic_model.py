@@ -125,9 +125,9 @@ class RegressionModel:
     @staticmethod
     def scaler_similarity(a, b):
         if isinstance(a, StandardScaler):
-            return 0  # FIXME: implement me!
+            return np.linalg.norm(a.mean_ - b.mean_) + np.linalg.norm(a.var_ - b.var_)
         elif isinstance(a, MinMaxScaler):
-            return 0  # FIXME: implement me!
+            return np.linalg.norm(a.data_min_ - b.data_min_) + np.linalg.norm(a.data_max_ - b.data_max_)
         else:
             raise ValueError('Unsupported scaler type.')
 
