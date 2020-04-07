@@ -94,7 +94,7 @@ The package exposes the `tbr_search` command line endpoint to facilitate search 
 See [the implementation](./tbr_reg/endpoints/search.py) for details. Common usage is as follows:
 
 ```bash
-tbr_search <data_dir> <batch_start> <batch_end> <out_dir> <search_space_config> [--feature-def=path] [--k-folds=int] [--score=str] [--strategy=str] [--keep-unimproved] [--save-trained-models] [--save-plots] [--n-jobs=int]
+tbr_search <data_dir> <batch_start> <batch_end> <out_dir> <search_space_config> [--feature-def=path] [--k-folds=int] [--score=str] [--strategy=str] [--keep-unimproved] [--save-trained-models] [--save-plots] [--save-interval=int] [--n-jobs=int]
 ```
 
 where:
@@ -109,8 +109,9 @@ where:
  - `--strategy`, if provided, is sampling strategy for hyperparamter optimization (defaults to "grid", can be either "grid" or "bayesian"),
  - `--keep-unimproved` enables saving model directories corresponding to models that are worse than the last best model encountered (off to save space by default),
  - `--save-trained-models`, enables saving pickled models in addition to performance plots (off to save space by default),
- - `--n-jobs` can be used to enable parallel processing, optimal setting depends on the hardware used (1 means no parallelization),
  - `--save-plots` enables saving generation of PDF and PNG performance plots for each fold (off to save space by default).
+ - `--save-interval` determines how often is CSV output produced (low values increase reliability but also overhead, defaults to 5),
+ - `--n-jobs` can be used to enable parallel processing, optimal setting depends on the hardware used (1 means no parallelization),
 
 ### Benchmarking models
 
