@@ -12,7 +12,7 @@ class RegressionModel:
         self.name = name
         self.scaling = scaling
         self.scaler_fitted = False
-        self.scaler = create_scaler()
+        self.scaler = self.create_scaler()
 
         self.renormalize = False
         self.saved_renormalization_sets = None, None
