@@ -18,6 +18,7 @@ setup(
             'tbr_eval = tbr_reg.endpoints.evaluation:main',
             'tbr_eval_ho = tbr_reg.endpoints.evaluation_hyperopt:main',
             'tbr_search = tbr_reg.endpoints.search:main',
+            'tbr_search_benchmark = tbr_reg.endpoints.search_benchmark:main',
             'tbr_qass = tbr_reg.endpoints.qass:main'
         ],
         'gui_scripts': [
