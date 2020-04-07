@@ -4,6 +4,7 @@ import sys
 import argparse
 import yaml
 import shutil
+import threading
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,6 +21,7 @@ from ..metric_loader import get_metric_factory
 
 
 best_score_so_far = None
+out_csv_lock = threading.Lock()
 
 
 def main():
@@ -53,6 +55,12 @@ def main():
                         help='do not clean up model directories with no accuracy improvement')
     parser.add_argument('--keep-trained-models', default=False, action='store_true',
                         help='save model files for each checkpoint')
+    parser.add_argument('--n-jobs', type=int, default=1,
+                        help='number of parallel jobs')
+    parser.add_argument('--save-interval', type=int, default=5,
+                        help='how often should outputs be saved')
+    parser.add_argument('--save-plots', default=False, action='store_true',
+                        help='produce performance plots for each fold')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -147,7 +155,9 @@ def main():
 
                 plot_perf_path = os.path.join(
                     get_model_dir(model_idx), 'fold%d' % fold_idx)
-                plot(plot_perf_path, model, X_test, y_test)
+                
+                if args.save_plots:
+                    plot(plot_perf_path, model, X_test, y_test)
             except Exception as e:
                 print(
                     f'WARNING: Fold {fold_idx+1} of {k_folds} failed with error: {e}')
@@ -180,6 +190,7 @@ def main():
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
         global best_score_so_far
+        global out_csv_lock
 
         if model_idx >= 0:
             model_dir = get_model_dir(model_idx)
@@ -206,11 +217,14 @@ def main():
                 shutil.rmtree(model_dir)
 
         # save checkpoint
-        if model_idx < 0 or model_idx % 5 == 0:
+        if model_idx < 0 or model_idx % args.save_interval == 0:
             out_file = get_output_file()
-            print(f'Writing {np.abs(model_idx)+1} results to {out_file}')
             scores = pd.DataFrame(data=data)
+
+            print(f'Writing {np.abs(model_idx)+1} results to {out_file}')
+            out_csv_lock.acquire()
             scores.to_csv(out_file)
+            out_csv_lock.release()
 
     if args.strategy == 'grid':
         search_algorithm = grid_search
@@ -221,7 +235,7 @@ def main():
 
     scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator, metric,
                               evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler,
-                              extra_columns=extra_columns)
+                              extra_columns=extra_columns, n_parallel=args.n_jobs)
 
     print('Search completed.')
     print('=====================================================')
