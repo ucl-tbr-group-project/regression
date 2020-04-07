@@ -138,7 +138,12 @@ class RegressionModel:
                 self.scaler is not None and alt_scaler is not None:
             similarity = scaler_similarity(self.scaler, alt_scaler)
 
-            if similarity > self.renormalization_threshold:
+            if similarity < self.renormalization_threshold:
+                print(
+                    f'Scaler similarity {similarity} is below set threshold {self.renormalization_threshold}, reusing previous scaler')
+            else:
+                print(
+                    f'Scaler similarity {similarity} exceeds set threshold {self.renormalization_threshold}, replacing scaler and training from scratch')
                 self.scaler = alt_scaler
                 self.scaler_fitted = True
                 return True
