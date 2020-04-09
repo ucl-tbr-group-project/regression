@@ -137,7 +137,7 @@ def benchmark_models(data, X, y, model_creator, kfold_indices, rows, extra_colum
     # make sure all model arguments are recorded
     first_model_args = drop_non_model_args(rows[0][1])
     for arg_name in first_model_args:
-        if arg_name not in data.keys():
+        if arg_name not in data.keys() and arg_name not in ['out']:
             data[arg_name] = []
 
     results = Parallel(n_jobs=n_parallel)(delayed(single_model_job)(X, y, model_creator, kfold_indices, rows, model_idx, extra_columns,
