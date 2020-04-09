@@ -43,6 +43,7 @@ class RegressionModel:
     def scale_training_set(self, X_train, y_train, out_scaler_file=None):
         if self.scaler is not None:
             Xy_in = self.join_sets(X_train, y_train)
+            print(type(Xy_in))
 
             if not self.scaler_fitted:
                 Xy_out = self.scaler.fit_transform(Xy_in)

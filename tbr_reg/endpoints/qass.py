@@ -99,27 +99,43 @@ def main():
     X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
                                        test_size=0.5, random_state=1)
     
-        #errmodel = get_model_factory()["nn"](cli_args=["--epochs=100", "--batch-size=100"
-        #                                              ,"--arch-type=1H_3F_256"])
-        #errmodel = get_model_factory()["idw"](cli_args=["--p=20"])
+    errmodel = get_model_factory()["nn"](cli_args=["--epochs=50", "--batch-size=200"
+                                                      ,"--arch-type=4F_512"])
+    #errmodel = get_model_factory()["rbf"](cli_args=["--d0=20"])
                                        
-        #train(errmodel, X_test1, test_err1)
-        #test(errmodel, X_test2, test_err2)
+    scaled_X_test1, scaled_test_err1 = errmodel.scale_training_set(X_test1, test_err1)
+    scaled_X_test2, scaled_test_err2 = errmodel.scale_testing_set(X_test2, test_err2)
+    dtest1 = pd.DataFrame(scaled_X_test1, columns = X_test1.columns, index = X_test1.index)
+    dtest2 = pd.DataFrame(scaled_X_test2, columns = X_test2.columns, index = X_test2.index)
+    derr1 = pd.Series(scaled_test_err1, index = test_err1.index)
+    derr2 = pd.Series(scaled_test_err2, index = test_err2.index)
+    
+    print(type(test_err1))
+    print(type(scaled_test_err1))
+    train(errmodel, dtest1, derr1)
+    test(errmodel, dtest2, derr2)
+    print(X_test1)
+    print(scaled_X_test1)
+    print(dtest1)
+    
+    
                                        
         #tri = Delaunay(X_test1.values, qhull_options="Qc QbB Qx Qz")                 
         #f = interpolate.LinearNDInterpolator(tri, test_err1.values)                  
-    errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
-    pred_err1 = errordist_test(X_test1.values)    
-    pred_err2 = errordist_test(X_test2.values)
+    #errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
+    #pred_err1 = errordist_test(X_test1.values)    
+    #pred_err2 = errordist_test(X_test2.values)
     
     errordist = interpolate.NearestNDInterpolator(X_test.values, test_err.values)
     pred_err = errordist(X_test.values)
     
     print('Max error: ' + str(max(test_err.values)))
     
-    #plot("qassplot2", errmodel, X_test2, test_err2)
-    plot_results("qassplot2", pred_err1, test_err1)
-    plot_results("qassplot3", pred_err2, test_err2) 
+    plot("qassplot2", errmodel, dtest1, derr1)
+    plt.figure()
+    plot("qassplot3", errmodel, dtest2, derr2)
+    #plot_results("qassplot2", pred_err1, test_err1)
+    #plot_results("qassplot3", pred_err2, test_err2) 
     
     plt.figure()
     plt.hist(test_err.values, bins=100)
