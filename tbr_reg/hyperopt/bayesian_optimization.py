@@ -40,7 +40,7 @@ def evaluate_single_point(X, y, k_folds, random_state, suggested, model_creator,
 
 def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creator, metric,
                           evaluation_handler, args_handler=None, post_evaluation_handler=None,
-                          n_iterations=9999, extra_columns=[], n_parallel=1):
+                          n_iterations=1000, extra_columns=[], n_parallel=1):
     dim_names, dims = model_space_to_dims(model_space)
     opt = Optimizer(dims, random_state=random_state)
 
