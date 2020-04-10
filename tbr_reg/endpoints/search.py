@@ -4,6 +4,7 @@ import sys
 import argparse
 import yaml
 import shutil
+import threading
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,6 +21,7 @@ from ..metric_loader import get_metric_factory
 
 
 best_score_so_far = None
+out_csv_lock = threading.Lock()
 
 
 def main():
@@ -51,8 +53,14 @@ def main():
                         help='algorithm used for search, supported values: "grid" (default), "bayesian"')
     parser.add_argument('--keep-unimproved', default=False, action='store_true',
                         help='do not clean up model directories with no accuracy improvement')
-    parser.add_argument('--keep-trained-models', default=False, action='store_true',
+    parser.add_argument('--save-trained-models', default=False, action='store_true',
                         help='save model files for each checkpoint')
+    parser.add_argument('--n-jobs', type=int, default=1,
+                        help='number of parallel jobs')
+    parser.add_argument('--save-interval', type=int, default=5,
+                        help='how often should outputs be saved')
+    parser.add_argument('--save-plots', default=False, action='store_true',
+                        help='produce performance plots for each fold')
     args = parser.parse_args()
 
     set_plotting_style()
@@ -76,10 +84,12 @@ def main():
         search_space_dict = yaml.load(f.read())
 
     metric = get_metric_factory()[args.score]()
-    all_metrics = [init_metric() for init_metric in get_metric_factory().values()]
+    all_metrics = [init_metric()
+                   for init_metric in get_metric_factory().values()]
     extra_columns = []
     for some_metric in all_metrics:
-        extra_columns += ['metric_%s%d' % (some_metric.id, i) for i in range(args.k_folds)]
+        extra_columns += ['metric_%s%d' %
+                          (some_metric.id, i) for i in range(args.k_folds)]
         extra_columns.append('mean_metric_%s' % some_metric.id)
     extra_columns += ['mean_time_train', 'mean_time_pred']
     extra_columns += ['time_train%d' % i for i in range(args.k_folds)]
@@ -112,7 +122,7 @@ def main():
             f.write(str(model_args))
 
         # set output directory for model
-        if args.keep_trained_models:
+        if args.save_trained_models:
             model_args['out'] = os.path.join(model_dir, 'fold%d')
 
         return model_args
@@ -121,7 +131,7 @@ def main():
         kfold = KFold(n_splits=k_folds, shuffle=True,
                       random_state=random_state)
         kfold_scores = []
-        extra_values = {column:[] for column in extra_columns}
+        extra_values = {column: [] for column in extra_columns}
 
         fold_idx = 0
         for train_index, test_index in kfold.split(X, y):
@@ -136,7 +146,8 @@ def main():
             try:
                 model = model_creator(arg_dict=fold_args)
                 train_time = train(model, X_train, y_train)
-                evaluations, pred_time = test(model, X_test, y_test, all_metrics)
+                evaluations, pred_time = test(
+                    model, X_test, y_test, all_metrics)
                 kfold_scores.append(evaluations[metric.id])
 
                 for metric_id, value in evaluations.items():
@@ -147,7 +158,9 @@ def main():
 
                 plot_perf_path = os.path.join(
                     get_model_dir(model_idx), 'fold%d' % fold_idx)
-                plot(plot_perf_path, model, X_test, y_test)
+
+                if args.save_plots:
+                    plot(plot_perf_path, model, X_test, y_test)
             except Exception as e:
                 print(
                     f'WARNING: Fold {fold_idx+1} of {k_folds} failed with error: {e}')
@@ -180,6 +193,7 @@ def main():
 
     def post_evaluation_handler(model_idx, data, model_mean_score):
         global best_score_so_far
+        global out_csv_lock
 
         if model_idx >= 0:
             model_dir = get_model_dir(model_idx)
@@ -206,11 +220,14 @@ def main():
                 shutil.rmtree(model_dir)
 
         # save checkpoint
-        if model_idx < 0 or model_idx % 5 == 0:
+        if model_idx < 0 or model_idx % args.save_interval == 0:
             out_file = get_output_file()
-            print(f'Writing {np.abs(model_idx)+1} results to {out_file}')
             scores = pd.DataFrame(data=data)
+
+            print(f'Writing {np.abs(model_idx)+1} results to {out_file}')
+            out_csv_lock.acquire()
             scores.to_csv(out_file)
+            out_csv_lock.release()
 
     if args.strategy == 'grid':
         search_algorithm = grid_search
@@ -221,7 +238,7 @@ def main():
 
     scores = search_algorithm(X, y, args.k_folds, random_state, model_space, model_creator, metric,
                               evaluation_handler, args_handler=args_handler, post_evaluation_handler=post_evaluation_handler,
-                              extra_columns=extra_columns)
+                              extra_columns=extra_columns, n_parallel=args.n_jobs)
 
     print('Search completed.')
     print('=====================================================')

@@ -8,7 +8,8 @@ setup(
     install_requires=['numpy', 'matplotlib',
                       'pandas', 'scikit-learn',
                       'keras', 'pyqt5', 'joblib',
-                      'scikit-optimize', 'smt'],
+                      'scikit-optimize', 'smt',
+                      'tensorflow'],
     entry_points={
         'console_scripts': [
             'tbr_train = tbr_reg.endpoints.training:main',
@@ -16,7 +17,9 @@ setup(
             'tbr_split = tbr_reg.endpoints.split_batches:main',
             'tbr_eval = tbr_reg.endpoints.evaluation:main',
             'tbr_eval_ho = tbr_reg.endpoints.evaluation_hyperopt:main',
+            'tbr_eval_benchmark = tbr_reg.endpoints.evaluation_benchmark:main',
             'tbr_search = tbr_reg.endpoints.search:main',
+            'tbr_search_benchmark = tbr_reg.endpoints.search_benchmark:main',
             'tbr_qass = tbr_reg.endpoints.qass:main'
         ],
         'gui_scripts': [

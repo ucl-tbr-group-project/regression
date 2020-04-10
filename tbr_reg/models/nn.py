@@ -229,8 +229,12 @@ class NeuralNetworkModel(RegressionModel):
         X_train, y_train = self.scale_training_set(
             X_train, y_train, out_scaler_file=self.out_scaler_file)
 
-        if self.net is None:
-            self.net = self.create_architecture(X_train.shape[1], self.arch_type)
+        if self.should_retrain_on_saved_set:
+            X_train, y_train = self.saved_renormalization_sets
+
+        if self.net is None or self.should_retrain_on_saved_set:
+            self.net = self.create_architecture(
+                X_train.shape[1], self.arch_type)
 
             if self.out_arch_file is not None:
                 with open(self.out_arch_file, 'w') as f:
