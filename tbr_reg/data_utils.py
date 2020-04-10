@@ -93,8 +93,18 @@ def c_d_y_split(df, drop_invalid=True):
                 'blanket_breeder_material',
                 'blanket_multiplier_material',
                 'blanket_coolant_material']
-    c_params = list(set(df.columns.tolist()) -
-                    set(y_params + drop_params + d_params))
+    c_params = ['firstwall_thickness',
+                'blanket_thickness',
+                'blanket_breeder_li6_enrichment_fraction',
+                'blanket_breeder_packing_fraction',
+                'blanket_multiplier_packing_fraction',
+                'blanket_multiplier_fraction',
+                'blanket_breeder_fraction',
+                'blanket_structural_fraction',
+                'blanket_coolant_fraction',
+                'firstwall_armour_fraction',
+                'firstwall_structural_fraction',
+                'firstwall_coolant_fraction']
 
     df_copy = df.copy()
 

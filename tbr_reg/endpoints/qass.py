@@ -57,13 +57,12 @@ def main():
         # generate initial parameters
         sampling_strategy = UniformSamplingStrategy()
         c = domain.gen_data_frame(sampling_strategy, init_samples)
-        print(c)
+        print(c.columns)
         # evaluate initial parameters in given theory
         print("Evaluating initial " + str(init_samples) + " samples in " + args.theory + " theory.")
         output = thistheory(params = c, domain = domain, n_samples = init_samples)
         X_init, d, y_multiple = c_d_y_split(output)
         y_init = y_multiple['tbr']
-        print(y_init)
     
     
     X, y = X_init, y_init
@@ -145,20 +144,48 @@ def main():
     
     saveinterval = 5
     nburn = 10000
-    nrun = 100000
+    nrun = 50000
     
     initial_sample = X_train.iloc[0]
-    print(initial_sample.values)
-    print(errordist(initial_sample.values))
+    #print(initial_sample.values)
+    #print(errordist(initial_sample.values))
     burnin_sample, burnin_dist, burnin_acceptance = burnin_MH(errordist, initial_sample.values, nburn)
     saved_samples, saved_dists, run_acceptance = run_MH(errordist, burnin_sample, nrun, saveinterval)
     
-    print(burnin_acceptance)
-    print(run_acceptance)
-    
     plt.figure()
     plt.hist(saved_dists, bins=100)
-    plt.savefig("qassplot5.pdf", format="pdf")  
+    plt.savefig("qassplot5.pdf", format="pdf") 
+    
+    print('MCMC run finished.')
+    print('Burn-In Acceptance: ' + str(burnin_acceptance))
+    print('Run Acceptance: ' + str(run_acceptance))
+    
+    current_samples = X_init
+    
+    cand_cdms = []
+    samplestep = int(saved_samples.shape[0] / step_candidates)
+    candidates = saved_samples[::samplestep]
+
+    for candidate in candidates:
+        cand_cdms.append( cdm(candidate,candidates) )
+       
+    
+    new_samples = pd.DataFrame(candidates, columns = current_samples.columns)
+    new_samples['error'] = saved_dists[::samplestep]
+    new_samples['cdm'] = cand_cdms 
+        
+    new_samples = new_samples.sort_values(by='error', ascending=False)
+
+    print(new_samples)
+
+    # Get names of indexes for which column Age has value 30
+    indexNames = new_samples[ new_samples['cdm'] <= 0.5 * new_samples['cdm'].max() ].index
+    # Delete these row indexes from dataFrame
+    new_samples.drop(indexNames , inplace=True)
+ 
+    print(new_samples)
+    
+     
 
     print('QASS finished.')
 
@@ -300,12 +327,25 @@ def normalize_c(c):
 
 def step_MH(errordist, current_sample, dist_current):
 
+    maxs = np.array([20, 500, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])    
+    
     nvar = current_sample.size
-    cov = np.identity(nvar) * 10
+    cov = np.diag(maxs) * 0.01
     
     #print("Current sample:")
     #print(current_sample)
     candidate_sample = np.random.multivariate_normal(current_sample, cov)
+    
+    #print("Candidate sample:")
+    #print(candidate_sample)
+    
+    it = np.nditer(candidate_sample, op_flags = ['readwrite'], flags = ['f_index'])
+    while not it.finished:
+        ind = it.index
+        if it[0] != max(min(it[0],maxs[ind]),0):
+            #print("Candidate rejected")
+            return current_sample, dist_current, 0
+        it.iternext()
     
     #print("Candidate sample:")
     #print(candidate_sample)
@@ -357,10 +397,14 @@ def run_MH(errordist, initial_sample, nrun, saveinterval):
             saved_samples = np.append(saved_samples, current_sample)
             saved_dists = np.append(saved_dists, dist_current)
     
-    return saved_samples, saved_dists, n_accept/nrun
-
-                        
-
+    return saved_samples.reshape((int(n_accept/saveinterval),nvar)), saved_dists, n_accept/nrun
+    
+def cdm(candidate, dataset):
+    cdm = 0
+    for sample in dataset:
+        cdmadd = np.linalg.norm(candidate-sample)
+        cdm += cdmadd
+    return cdm                  
 
 
 
