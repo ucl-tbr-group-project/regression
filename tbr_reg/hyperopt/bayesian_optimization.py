@@ -52,7 +52,7 @@ def bayesian_optimization(X, y, k_folds, random_state, model_space, model_creato
         data[column] = []
 
     model_idx = 0
-    for i in range(n_iterations):
+    for i in range(0, n_iterations, n_parallel):
         suggested = opt.ask(n_points=n_parallel)
 
         results = Parallel(n_jobs=n_parallel)(
