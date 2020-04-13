@@ -67,6 +67,19 @@ class RegressionModel:
 
         return X_train, y_train
 
+    def get_saved_renormalization_set_for_retraining(self):
+        if not self.renormalize:
+            return None, None
+
+        X_train, y_train = self.saved_renormalization_sets
+
+        if self.scaler is not None:
+            Xy_in = self.join_sets(X_train, y_train)
+            Xy_out = self.scaler.transform(Xy_in)
+            X_train, y_train = self.split_sets(Xy_out)
+
+        return X_train, y_train
+
     def scale_testing_set(self, X_test, y_test):
         if self.scaler is not None:
             y_test = y_test if y_test is not None \

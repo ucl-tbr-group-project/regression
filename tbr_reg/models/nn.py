@@ -230,9 +230,9 @@ class NeuralNetworkModel(RegressionModel):
             X_train, y_train, out_scaler_file=self.out_scaler_file)
 
         if self.should_retrain_on_saved_set:
-            X_train, y_train = self.saved_renormalization_sets
-            np.savetxt("nntestX.csv",X_train)
-            np.savetxt("nntesty.csv",y_train)
+            X_train, y_train = self.get_saved_renormalization_set_for_retraining()
+            np.savetxt("nntestX.csv", X_train)
+            np.savetxt("nntesty.csv", y_train)
 
         if self.net is None or self.should_retrain_on_saved_set:
             self.net = self.create_architecture(
