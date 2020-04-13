@@ -11,6 +11,7 @@ from ..data_utils import load_batches, encode_data_frame, x_y_split
 from ..plot_utils import set_plotting_style
 from ..plot_reg_performance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
+from ..metric_loader import get_metric_factory
 
 
 def main():
@@ -150,6 +151,31 @@ def plot_results(save_plot_path, y_pred, y_test):
     else:
         plt.savefig('%s.png' % save_plot_path)
         plt.savefig('%s.pdf' % save_plot_path)
+        
+def get_metrics(model, X_test, y_test): 
+
+    df = X_test.copy()
+    
+    in_columns = list(df.columns)
+    
+    df.insert(0, 'tbr', -1.)
+    df.insert(0, 'tbr_pred', -1.)
+    df['tbr'] = y_test
+    df['tbr_pred'] = model.predict(X_test)
+
+    out_vals = []
+    out_names = []
+
+    for init_metric in get_metric_factory().values():
+        metric = init_metric()
+        metric_value = metric.evaluate(
+            df[in_columns], df['tbr'].to_numpy(), df['tbr_pred'].to_numpy())
+        out_vals.append(metric_value)
+        out_names.append(metric.name)
+
+    return pd.DataFrame([out_vals], columns=out_names)       
+     
+        
 
 if __name__ == '__main__':
     main()

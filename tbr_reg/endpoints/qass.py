@@ -12,9 +12,10 @@ from sklearn.model_selection import KFold
 from ATE import UniformSamplingStrategy, Domain, Samplerun
 from ..data_utils import load_batches, encode_data_frame, x_y_split, c_d_y_split, c_d_split
 from ..plot_utils import set_plotting_style
-from ..plot_reg_performance import plot_reg_performance
+from ..plot_reg_prformance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
-from tbr_reg.endpoints.training import train, test, plot, plot_results
+from ..metric_loader import get_metric_factory
+from tbr_reg.endpoints.training import train, test, plot, plot_results, get_metrics
 
 
 def main():
@@ -63,129 +64,186 @@ def main():
         output = thistheory(params = c, domain = domain, n_samples = init_samples)
         X_init, d, y_multiple = c_d_y_split(output)
         y_init = y_multiple['tbr']
+        current_samples, current_tbr = X_init, y_init
     
     
-    X, y = X_init, y_init
-    samp_size = X.shape[0]
-    print(samp_size)
+    # MAIN QASS LOOP
     
-    # Train surrogate for theory and plot
+    complete_condition = False
+    iter_count = 0
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, 
-                                       test_size=0.5, random_state=1)
-                                       
-    X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train, 
-                                       test_size=0.1, random_state=1)
-                                       
-    train(thismodel, X_train, y_train)
-    test(thismodel, X_test, y_test)
+    err_target = 0.0001
+    max_iter_count = 10000
     
-    plot("qassplot", thismodel, X_test, y_test)
-    
-    
-    # Calculate error data for this training iteration
-    
-    y_train_pred = thismodel.predict(X_train)
-    y_test_pred = thismodel.predict(X_test)
-    
-    train_err = abs(y_train - y_train_pred)
-    test_err = abs(y_test - y_test_pred)
-   
-    
-    
-    # Train surrogate (nearest neighbor interpolator) for error function
-    
-    X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
-                                       test_size=0.5, random_state=1)
-    
-    errmodel = get_model_factory()["nn"](cli_args=["--epochs=50", "--batch-size=200"
-                                                      ,"--arch-type=4F_512"])
-    #errmodel = get_model_factory()["rbf"](cli_args=["--d0=20"])
-                                       
-    scaled_X_test1, scaled_test_err1 = errmodel.scale_training_set(X_test1, test_err1)
-    scaled_X_test2, scaled_test_err2 = errmodel.scale_testing_set(X_test2, test_err2)
-    dtest1 = pd.DataFrame(scaled_X_test1, columns = X_test1.columns, index = X_test1.index)
-    dtest2 = pd.DataFrame(scaled_X_test2, columns = X_test2.columns, index = X_test2.index)
-    derr1 = pd.Series(scaled_test_err1, index = test_err1.index)
-    derr2 = pd.Series(scaled_test_err2, index = test_err2.index)
-    
-    print(type(test_err1))
-    print(type(scaled_test_err1))
-    train(errmodel, dtest1, derr1)
-    test(errmodel, dtest2, derr2)
-    print(X_test1)
-    print(scaled_X_test1)
-    print(dtest1)
-    
-    
-                                       
-        #tri = Delaunay(X_test1.values, qhull_options="Qc QbB Qx Qz")                 
-        #f = interpolate.LinearNDInterpolator(tri, test_err1.values)                  
-    #errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
-    #pred_err1 = errordist_test(X_test1.values)    
-    #pred_err2 = errordist_test(X_test2.values)
-    
-    errordist = interpolate.NearestNDInterpolator(X_test.values, test_err.values)
-    pred_err = errordist(X_test.values)
-    
-    print('Max error: ' + str(max(test_err.values)))
-    
-    plot("qassplot2", errmodel, dtest1, derr1)
-    plt.figure()
-    plot("qassplot3", errmodel, dtest2, derr2)
-    #plot_results("qassplot2", pred_err1, test_err1)
-    #plot_results("qassplot3", pred_err2, test_err2) 
-    
-    plt.figure()
-    plt.hist(test_err.values, bins=100)
-    plt.savefig("qassplot4.pdf", format="pdf")   
-    
-    # Perform MCMC on error function
-    
-    saveinterval = 5
-    nburn = 10000
-    nrun = 50000
-    
-    initial_sample = X_train.iloc[0]
-    #print(initial_sample.values)
-    #print(errordist(initial_sample.values))
-    burnin_sample, burnin_dist, burnin_acceptance = burnin_MH(errordist, initial_sample.values, nburn)
-    saved_samples, saved_dists, run_acceptance = run_MH(errordist, burnin_sample, nrun, saveinterval)
-    
-    plt.figure()
-    plt.hist(saved_dists, bins=100)
-    plt.savefig("qassplot5.pdf", format="pdf") 
-    
-    print('MCMC run finished.')
-    print('Burn-In Acceptance: ' + str(burnin_acceptance))
-    print('Run Acceptance: ' + str(run_acceptance))
-    
-    current_samples = X_init
-    
-    cand_cdms = []
-    samplestep = int(saved_samples.shape[0] / step_candidates)
-    candidates = saved_samples[::samplestep]
-
-    for candidate in candidates:
-        cand_cdms.append( cdm(candidate,candidates) )
-       
-    
-    new_samples = pd.DataFrame(candidates, columns = current_samples.columns)
-    new_samples['error'] = saved_dists[::samplestep]
-    new_samples['cdm'] = cand_cdms 
-        
-    new_samples = new_samples.sort_values(by='error', ascending=False)
-
-    print(new_samples)
-
-    # Get names of indexes for which column Age has value 30
-    indexNames = new_samples[ new_samples['cdm'] <= 0.5 * new_samples['cdm'].max() ].index
-    # Delete these row indexes from dataFrame
-    new_samples.drop(indexNames , inplace=True)
- 
-    print(new_samples)
-    
+    all_metrics = pd.DataFrame()
      
+        
+    while not complete_condition:
+        iter_count += 1
+        samp_size = current_samples.shape[0]
+        print("Iteration " + str(iter_count) + " -- Total samples: " + str(samp_size))
+        
+        # Train surrogate for theory, and plot results
+        
+        X_train, X_test, y_train, y_test = train_test_split(current_samples, current_tbr, 
+                                           test_size=0.5, random_state=1)
+                                           
+        X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train, 
+                                           test_size=0.1, random_state=1)
+                                           
+        train(thismodel, X_train, y_train)
+        test(thismodel, X_test, y_test)
+        
+        plot("qassplot", thismodel, X_test, y_test)
+        this_metrics = get_metrics(thismodel, X_test, y_test)
+        this_metrics['numdata'] = samp_size
+        print(this_metrics)
+        
+        
+        # Calculate error data for this training iteration
+        
+        y_train_pred = thismodel.predict(X_train)
+        y_test_pred = thismodel.predict(X_test)
+        
+        train_err = abs(y_train - y_train_pred)
+        test_err = abs(y_test - y_test_pred)
+       
+        
+        
+        # Train neural network surrogate for error function (Failed)
+        
+        X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
+                                               test_size=0.5, random_state=1)
+            
+            #errmodel = get_model_factory()["nn"](cli_args=["--epochs=50", "--batch-size=200"
+                                                             # ,"--arch-type=4F_512"])
+            #errmodel = get_model_factory()["rbf"](cli_args=["--d0=20"])
+                                               
+            #scaled_X_test1, scaled_test_err1 = errmodel.scale_training_set(X_test1, test_err1)
+            #scaled_X_test2, scaled_test_err2 = errmodel.scale_testing_set(X_test2, test_err2)
+            #dtest1 = pd.DataFrame(scaled_X_test1, columns = X_test1.columns,
+                                                #  index = X_test1.index)
+            #dtest2 = pd.DataFrame(scaled_X_test2, columns = X_test2.columns,
+                                                #  index = X_test2.index)
+            #derr1 = pd.Series(scaled_test_err1, index = test_err1.index)
+            #derr2 = pd.Series(scaled_test_err2, index = test_err2.index)
+            
+            #print(type(test_err1))
+            #print(type(scaled_test_err1))
+            #train(errmodel, dtest1, derr1)
+            #test(errmodel, dtest2, derr2)
+            #print(X_test1)
+            #print(scaled_X_test1)
+            #print(dtest1)
+            
+            #plot("qassplot3", errmodel, dtest2, derr2) 
+            
+            
+                                               
+                #tri = Delaunay(X_test1.values, qhull_options="Qc QbB Qx Qz")                 
+                #f = interpolate.LinearNDInterpolator(tri, test_err1.values)
+                
+                 
+        # Test surrogate (nearest neighbor interpolator) on split error data        
+                                 
+        errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
+        pred_err1 = errordist_test(X_test1.values)    
+        pred_err2 = errordist_test(X_test2.values)
+        
+        # Train surrogate (nearest neighbor interpolator) for error function
+        
+        errordist = interpolate.NearestNDInterpolator(X_test.values, test_err.values)
+        pred_err = errordist(X_test.values)
+        
+        max_err = max(test_err.values)
+        print('Max error: ' + str(max_err))
+        this_metrics['maxerr'] = max_err
+        
+        plot_results("qassplot2", pred_err1, test_err1)
+        plt.figure()
+        plot_results("qassplot3", pred_err2, test_err2) 
+        
+        plt.figure()
+        plt.hist(test_err.values, bins=100)
+        plt.savefig("qassplot4.pdf", format="pdf")   
+        
+        
+        
+        # Perform MCMC on error function
+        
+        saveinterval = 5
+        nburn = 10000
+        nrun = 100000
+        
+        initial_sample = X_train.iloc[0]
+        #print(initial_sample.values)
+        #print(errordist(initial_sample.values))
+        burnin_sample, burnin_dist, burnin_acceptance = burnin_MH(errordist, initial_sample.values, nburn)
+        saved_samples, saved_dists, run_acceptance = run_MH(errordist, burnin_sample, nrun, saveinterval)
+        
+        plt.figure()
+        plt.hist(saved_dists, bins=100)
+        plt.savefig("qassplot5.pdf", format="pdf") 
+        
+        print('MCMC run finished.')
+        print('Burn-In Acceptance: ' + str(burnin_acceptance))
+        print('Run Acceptance: ' + str(run_acceptance))
+        this_metrics['burn_acc'] = burnin_acceptance
+        this_metrics['run_acc'] = run_acceptance
+        
+                
+        # Extract candidate samples from MCMC output and calculate mutual crowding distance
+        
+        cand_cdms = []
+        print(saved_samples.shape)
+        samplestep = int(saved_samples.shape[0] / step_candidates)
+        print(samplestep)
+        candidates = saved_samples[::samplestep]
+
+        for candidate in candidates:
+            cand_cdms.append( cdm(candidate,candidates) )
+
+        # Rank candidate samples by error value, and filter out crowded samples
+        
+        new_samples = pd.DataFrame(candidates, columns = current_samples.columns)
+        new_samples['error'] = saved_dists[::samplestep]
+        new_samples['cdm'] = cand_cdms 
+        
+        print(new_samples)
+        print(new_samples.shape)
+            
+        new_samples = new_samples.sort_values(by='error', ascending=False)
+
+        indexNames = new_samples[ new_samples['cdm'] <= new_samples['cdm'].median() ].index
+        new_samples.drop(indexNames , inplace=True)
+    
+        print(new_samples.shape)
+        
+        new_samples.drop(columns=['error', 'cdm'])
+        new_samples = new_samples.head(step_samples).reset_index()
+        
+        
+        # Add new samples and corresponding TBR evaluations to current sample set
+        
+        new_output = thistheory(params = new_samples.join(pd.concat([d.head(1)]*step_samples, ignore_index=True)), domain = domain, n_samples = step_samples)
+        new_samples, new_d, new_y_multiple = c_d_y_split(new_output)
+        new_tbr = new_y_multiple['tbr']
+        
+        print(new_samples) 
+        
+        current_samples = pd.concat([current_samples, new_samples], ignore_index=True)
+        current_tbr = pd.concat([current_tbr, new_tbr], ignore_index=True)
+    
+    
+        # Check completion conditions and close loop
+    
+        if max_err < err_target or iter_count > max_iter_count:
+            complete_condition = True
+        
+        all_metrics = pd.concat([all_metrics,this_metrics], ignore_index=True)
+        print(all_metrics)
+        all_metrics.to_csv('qassmetrics.csv')
+
 
     print('QASS finished.')
 
@@ -260,6 +318,9 @@ def theory_sinusoidal(params, domain, n_samples=1, waven=1):
     
     c, d = c_d_split(params)
     c = normalize_c(c)
+    print(c)
+    print(c.shape)
+    print(n_samples)
     for i in range(n_samples):
         vec = c.iloc[i].values
         sinvec = (1 + np.sin(waven*2*np.pi*(vec-0.5)))/2  #waven sine waves in parameter
@@ -325,19 +386,21 @@ def normalize_c(c):
     c['firstwall_thickness'] /= 20
     return c
 
-def step_MH(errordist, current_sample, dist_current):
+def step_MH(errordist, current_sample, dist_current, verbose=False):
 
     maxs = np.array([20, 500, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])    
     
     nvar = current_sample.size
     cov = np.diag(maxs) * 0.01
     
-    #print("Current sample:")
-    #print(current_sample)
+    if verbose:
+        print("Current sample:")
+        print(current_sample)
     candidate_sample = np.random.multivariate_normal(current_sample, cov)
     
-    #print("Candidate sample:")
-    #print(candidate_sample)
+    if verbose:
+        print("Candidate sample:")
+        print(candidate_sample)
     
     it = np.nditer(candidate_sample, op_flags = ['readwrite'], flags = ['f_index'])
     while not it.finished:
@@ -346,23 +409,18 @@ def step_MH(errordist, current_sample, dist_current):
             #print("Candidate rejected")
             return current_sample, dist_current, 0
         it.iternext()
-    
-    #print("Candidate sample:")
-    #print(candidate_sample)
 
     dist_candidate = errordist(candidate_sample)
 
-    acceptance_prob = min(1.0,dist_candidate/dist_current); # Metropolos-Hastings acceptance condition
+    acceptance_prob = min(1.0,dist_candidate/dist_current); # Metropolis-Hastings condition
     accept_rand = np.random.uniform(0,1,1)
-    #print(dist_candidate)
-    #print(dist_current)
-    #print(acceptance_prob)
-    #print(accept_rand)
     if(accept_rand < acceptance_prob and acceptance_prob>0):
-        #print("Candidate accepted")
+        if verbose:
+            print("Candidate accepted")
         return candidate_sample, dist_candidate, 1
     else:
-        #print("Candidate rejected")
+        if verbose:
+            print("Candidate rejected")
         return current_sample, dist_current, 0
         
 def burnin_MH(errordist, initial_sample, nburn):
