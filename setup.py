@@ -20,7 +20,9 @@ setup(
             'tbr_eval_benchmark = tbr_reg.endpoints.evaluation_benchmark:main',
             'tbr_search = tbr_reg.endpoints.search:main',
             'tbr_search_benchmark = tbr_reg.endpoints.search_benchmark:main',
-            'tbr_qass = tbr_reg.endpoints.qass:main'
+            'tbr_qass1 = tbr_reg.endpoints.qass_v1:main',
+            'tbr_qass2 = tbr_reg.endpoints.qass_v2:main',
+            'tbr_qass3 = tbr_reg.endpoints.qass_v3:main'
         ],
         'gui_scripts': [
             'tbr_visualizer = tbr_reg.endpoints.visualizer:main'

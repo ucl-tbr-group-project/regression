@@ -12,7 +12,7 @@ from sklearn.model_selection import KFold
 from ATE import UniformSamplingStrategy, Domain, Samplerun
 from ..data_utils import load_batches, encode_data_frame, x_y_split, c_d_y_split, c_d_split
 from ..plot_utils import set_plotting_style
-from ..plot_reg_prformance import plot_reg_performance
+from ..plot_reg_performance import plot_reg_performance
 from ..model_loader import get_model_factory, load_model_from_file
 from ..metric_loader import get_metric_factory
 from tbr_reg.endpoints.training import train, test, plot, plot_results, get_metrics
@@ -73,25 +73,30 @@ def main():
     iter_count = 0
     
     err_target = 0.0001
-    max_iter_count = 10000
+    max_iter_count = 70
     
     all_metrics = pd.DataFrame()
+    
+    current_samples = current_samples.sort_index(axis=1)
+    
+    print(f'Features in order are: {list(current_samples.columns)}')
+    
+    X_train, X_test, y_train, y_test = train_test_split(current_samples, current_tbr, 
+                                           test_size=0.5, random_state=1)
+                                           
+    thismodel.enable_renormalization(1)
      
         
     while not complete_condition:
         iter_count += 1
-        samp_size = current_samples.shape[0]
+        samp_size = X_train.shape[0] * 2
         print("Iteration " + str(iter_count) + " -- Total samples: " + str(samp_size))
         
         # Train surrogate for theory, and plot results
-        
-        X_train, X_test, y_train, y_test = train_test_split(current_samples, current_tbr, 
-                                           test_size=0.5, random_state=1)
-                                           
-        X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train, 
-                                           test_size=0.1, random_state=1)
-                                           
-        train(thismodel, X_train, y_train)
+                
+        if iter_count == 1:                           
+            new_samples, new_tbr = X_train, y_train
+        train(thismodel, new_samples, new_tbr)
         test(thismodel, X_test, y_test)
         
         plot("qassplot", thismodel, X_test, y_test)
@@ -102,8 +107,8 @@ def main():
         
         # Calculate error data for this training iteration
         
-        y_train_pred = thismodel.predict(X_train)
-        y_test_pred = thismodel.predict(X_test)
+        y_train_pred = thismodel.predict(X_train.to_numpy())
+        y_test_pred = thismodel.predict(X_test.to_numpy())
         
         train_err = abs(y_train - y_train_pred)
         test_err = abs(y_test - y_test_pred)
@@ -111,6 +116,8 @@ def main():
         
         
         # Train neural network surrogate for error function (Failed)
+        
+        X_test = X_test.sort_index(axis=1)
         
         X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
                                                test_size=0.5, random_state=1)
@@ -173,7 +180,7 @@ def main():
         
         saveinterval = 5
         nburn = 10000
-        nrun = 100000
+        nrun = 50000
         
         initial_sample = X_train.iloc[0]
         #print(initial_sample.values)
@@ -209,15 +216,13 @@ def main():
         new_samples['error'] = saved_dists[::samplestep]
         new_samples['cdm'] = cand_cdms 
         
-        print(new_samples)
-        print(new_samples.shape)
+        #print(new_samples)
+        #print(new_samples.shape)
             
         new_samples = new_samples.sort_values(by='error', ascending=False)
 
         indexNames = new_samples[ new_samples['cdm'] <= new_samples['cdm'].median() ].index
         new_samples.drop(indexNames , inplace=True)
-    
-        print(new_samples.shape)
         
         new_samples.drop(columns=['error', 'cdm'])
         new_samples = new_samples.head(step_samples).reset_index()
@@ -229,11 +234,16 @@ def main():
         new_samples, new_d, new_y_multiple = c_d_y_split(new_output)
         new_tbr = new_y_multiple['tbr']
         
-        print(new_samples) 
+        #print(new_samples) 
         
-        current_samples = pd.concat([current_samples, new_samples], ignore_index=True)
-        current_tbr = pd.concat([current_tbr, new_tbr], ignore_index=True)
-    
+        new_samples = new_samples.sort_index(axis=1)
+        
+        #new_X_train, new_X_test, new_y_train, new_y_test = train_test_split(new_samples, new_tbr,test_size=0.5, random_state=1)
+
+        X_train = pd.concat([X_train, new_samples], ignore_index=True)
+        #X_test = pd.concat([X_test, new_X_test], ignore_index=True)
+        y_train = pd.concat([y_train, new_tbr], ignore_index=True)
+        #y_test = pd.concat([y_test, new_y_test], ignore_index=True)
     
         # Check completion conditions and close loop
     
@@ -388,7 +398,7 @@ def normalize_c(c):
 
 def step_MH(errordist, current_sample, dist_current, verbose=False):
 
-    maxs = np.array([20, 500, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])    
+    maxs = np.array([1, 1, 1, 1, 1, 1, 1, 500, 1, 1, 1, 20])    
     
     nvar = current_sample.size
     cov = np.diag(maxs) * 0.01
@@ -431,7 +441,7 @@ def burnin_MH(errordist, initial_sample, nburn):
     n_accept = 0
     
     for i in range(nburn):
-        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current);  # Run one iteration of Markov Chain
+        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current, verbose=False);  # Run one iteration of Markov Chain
         n_accept += if_accepted
         
     return current_sample, dist_current, n_accept/nburn
