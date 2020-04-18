@@ -29,10 +29,16 @@ def main():
     init_samples = args.init_samples
     step_samples = args.step_samples
     step_candidates = args.step_candidates
+    eval_samples = args.eval_samples
+    retrain = args.retrain
     d_params = disctrans(args.disc_fix)
     
+    #ratio = 0.5
+    #step_new_samples = int(step_samples * ratio)
+    #step_rand_samples = step_samples - step_new_samples
+    
     # Collect surrogate model type and theory under study.
-    thismodel = get_model_factory()[args.model](cli_args=sys.argv[7:])
+    thismodel = get_model_factory()[args.model](cli_args=sys.argv[9:])
     thistheory = globals()["theory_" + args.theory]
     
     
@@ -71,6 +77,8 @@ def main():
     
     complete_condition = False
     iter_count = 0
+    trigger_retrain = False
+    similarity = 0
     
     err_target = 0.0001
     max_iter_count = 10000
@@ -86,17 +94,48 @@ def main():
         # Train surrogate for theory, and plot results
         
         X_train, X_test, y_train, y_test = train_test_split(current_samples, current_tbr, 
-                                           test_size=0.5, random_state=1)
-                          
-        # Naive non-retraining scheme                  
+                                           test_size=0.5) #play with this
                                            
+        
+                          
+        # Goldilocks retraining scheme                  
+        
+        if iter_count > 1:
+            alt_scaler = thismodel.create_scaler()
+            Xy_in = thismodel.join_sets(X_train, y_train)
+            alt_scaler.fit(Xy_in) 
+            similarity = thismodel.scaler_similarity(thismodel.scaler, alt_scaler)
+            if iter_count%5 == 0: #restart with new random weights  
+                #thismodel = get_model_factory()[args.model](cli_args=sys.argv[8:])
+                thismodel.scaler = alt_scaler
+                                
         train(thismodel, X_train, y_train)
         test(thismodel, X_test, y_test)
+        
         
         plot("qassplot", thismodel, X_test, y_test)
         this_metrics = get_metrics(thismodel, X_test, y_test)
         this_metrics['numdata'] = samp_size
+        this_metrics['similarity'] = similarity
         print(this_metrics)
+        
+        # True evaluation test on uniform random data
+        
+        evaltest_samples = domain.gen_data_frame(sampling_strategy, eval_samples)
+        
+        eval_output = thistheory(params = evaltest_samples, domain = domain, n_samples = eval_samples)
+        evaltest_samples, evaltest_d, evaltest_y_multiple = c_d_y_split(eval_output)
+        evaltest_tbr = evaltest_y_multiple['tbr']
+        
+        test(thismodel, evaltest_samples, evaltest_tbr)
+        plot("qassplot2", thismodel, evaltest_samples, evaltest_tbr)
+        eval_metrics = get_metrics(thismodel, evaltest_samples, evaltest_tbr)
+        print(eval_samples)
+        
+        this_metrics['E_MAE'] = eval_metrics['MAE']
+        this_metrics['E_S'] = eval_metrics['S']
+        this_metrics['E_R2'] = eval_metrics['R2']
+        this_metrics['E_R2(adj)'] = eval_metrics['R2(adj)']
         
         
         # Calculate error data for this training iteration
@@ -157,8 +196,6 @@ def main():
         max_err = max(test_err.values)
         print('Max error: ' + str(max_err))
         this_metrics['maxerr'] = max_err
-        
-        plot_results("qassplot2", pred_err1, test_err1)
         plt.figure()
         plot_results("qassplot3", pred_err2, test_err2) 
         
@@ -172,7 +209,7 @@ def main():
         
         saveinterval = 5
         nburn = 10000
-        nrun = 100000
+        nrun = 50000
         
         initial_sample = X_train.iloc[0]
         #print(initial_sample.values)
@@ -193,27 +230,29 @@ def main():
                 
         # Extract candidate samples from MCMC output and calculate mutual crowding distance
         
-        cand_cdms = []
+        #cand_cdms = []
         samplestep = int(saved_samples.shape[0] / step_candidates)
         candidates = saved_samples[::samplestep]
 
-        for candidate in candidates:
-            cand_cdms.append( cdm(candidate,candidates) )
+        #for candidate in candidates:
+        #    cand_cdms.append( cdm(candidate,candidates) )
 
         # Rank candidate samples by error value, and filter out crowded samples
         
         new_samples = pd.DataFrame(candidates, columns = current_samples.columns)
         new_samples['error'] = saved_dists[::samplestep]
-        new_samples['cdm'] = cand_cdms 
+        #new_samples['cdm'] = cand_cdms 
             
         new_samples = new_samples.sort_values(by='error', ascending=False)
 
-        indexNames = new_samples[ new_samples['cdm'] <= new_samples['cdm'].median() ].index
-        new_samples.drop(indexNames , inplace=True)
+        #indexNames = new_samples[ new_samples['cdm'] <= new_samples['cdm'].median() ].index
+        #new_samples.drop(indexNames , inplace=True)
         
-        new_samples.drop(columns=['error', 'cdm'])
+        #new_samples.drop(columns=['error'])
+        #new_samples.drop(columns=['cdm'])
         new_samples = new_samples.head(step_samples).reset_index()
         
+        print(new_samples)
         
         # Add new samples and corresponding TBR evaluations to current sample set
         
@@ -221,8 +260,17 @@ def main():
         new_samples, new_d, new_y_multiple = c_d_y_split(new_output)
         new_tbr = new_y_multiple['tbr']
         
-        current_samples = pd.concat([current_samples, new_samples], ignore_index=True)
-        current_tbr = pd.concat([current_tbr, new_tbr], ignore_index=True)
+        
+        # Add new random samples
+        
+            #new_rand_samples = domain.gen_data_frame(sampling_strategy, step_rand_samples)
+            
+            #new_rand_output = thistheory(params = new_rand_samples, domain = domain, n_samples = step_rand_samples)
+            #new_rand_samples, new_rand_d, new_rand_y_multiple = c_d_y_split(new_rand_output)
+            #new_rand_tbr = new_rand_y_multiple['tbr']
+            
+            #current_samples = pd.concat([current_samples, new_samples, new_rand_samples], ignore_index=True)
+            #current_tbr = pd.concat([current_tbr, new_tbr, new_rand_tbr], ignore_index=True)
     
     
         # Check completion conditions and close loop
@@ -255,10 +303,16 @@ def input_parse():
                         help='number of samples kept per update')
     parser.add_argument('step_candidates', type=int,
                         help='number of candidate samples generated in MCMC per update')
+    parser.add_argument('eval_samples', type=int,
+                        help='number of samples used for evaluation testing')
+    parser.add_argument('retrain', type=float,
+                        help='threshold for Goldilocks retraining scheme')
     parser.add_argument('--saved-init', type=str, default=False,
                         help='Retrieve inital sample parameters from this file (max init_samples samples will be retrieved)')
+                        
+                     
 
-    args = parser.parse_args(sys.argv[1:7])
+    args = parser.parse_args(sys.argv[1:9])
     return args
     
     

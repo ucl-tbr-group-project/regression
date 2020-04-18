@@ -20,7 +20,7 @@ from tbr_reg.endpoints.training import train, test, plot, plot_results, get_metr
 
 def main():
     '''
-    Perform quality-adaptive sampling algorithm
+    Perform FAKE quality-adaptive sampling algorithm
     '''
     
     # Parse inputs and store in relevant variables.
@@ -32,10 +32,6 @@ def main():
     eval_samples = args.eval_samples
     retrain = args.retrain
     d_params = disctrans(args.disc_fix)
-    
-    ratio = 0.5
-    step_new_samples = int(step_samples * ratio)
-    step_rand_samples = step_samples - step_new_samples
     
     # Collect surrogate model type and theory under study.
     thismodel = get_model_factory()[args.model](cli_args=sys.argv[9:])
@@ -94,9 +90,7 @@ def main():
         # Train surrogate for theory, and plot results
         
         X_train, X_test, y_train, y_test = train_test_split(current_samples, current_tbr, 
-                                           test_size=0.5) #play with this
-                                           
-        
+                                           test_size=0.5, random_state=1) #play with this
                           
         # Goldilocks retraining scheme                  
         
@@ -105,13 +99,13 @@ def main():
             Xy_in = thismodel.join_sets(X_train, y_train)
             alt_scaler.fit(Xy_in) 
             similarity = thismodel.scaler_similarity(thismodel.scaler, alt_scaler)
-            if iter_count%100000 == 0: #restart with new random weights  
+            if iter_count%10000 == 0: #restart with new random weights  
                 #thismodel = get_model_factory()[args.model](cli_args=sys.argv[8:])
                 thismodel.scaler = alt_scaler
                                 
         train(thismodel, X_train, y_train)
         test(thismodel, X_test, y_test)
-        
+       
         
         plot("qassplot", thismodel, X_test, y_test)
         this_metrics = get_metrics(thismodel, X_test, y_test)
@@ -119,8 +113,9 @@ def main():
         this_metrics['similarity'] = similarity
         print(this_metrics)
         
-        # True evaluation test on uniform random data
         
+        # True evaluation test on uniform random data
+                
         evaltest_samples = domain.gen_data_frame(sampling_strategy, eval_samples)
         
         eval_output = thistheory(params = evaltest_samples, domain = domain, n_samples = eval_samples)
@@ -138,152 +133,31 @@ def main():
         this_metrics['E_R2(adj)'] = eval_metrics['R2(adj)']
         
         
-        # Calculate error data for this training iteration
         
-        y_train_pred = thismodel.predict(X_train)
-        y_test_pred = thismodel.predict(X_test)
-        
-        train_err = abs(y_train - y_train_pred)
-        test_err = abs(y_test - y_test_pred)
-       
+        # Generate uniform random new samples
         
         
-        # Train neural network surrogate for error function (Failed)
+        new_samples = domain.gen_data_frame(sampling_strategy, step_samples)
         
-        X_test1, X_test2, test_err1, test_err2 = train_test_split(X_test, test_err, 
-                                               test_size=0.5, random_state=1)
-            
-            #errmodel = get_model_factory()["nn"](cli_args=["--epochs=50", "--batch-size=200"
-                                                             # ,"--arch-type=4F_512"])
-            #errmodel = get_model_factory()["rbf"](cli_args=["--d0=20"])
-                                               
-            #scaled_X_test1, scaled_test_err1 = errmodel.scale_training_set(X_test1, test_err1)
-            #scaled_X_test2, scaled_test_err2 = errmodel.scale_testing_set(X_test2, test_err2)
-            #dtest1 = pd.DataFrame(scaled_X_test1, columns = X_test1.columns,
-                                                #  index = X_test1.index)
-            #dtest2 = pd.DataFrame(scaled_X_test2, columns = X_test2.columns,
-                                                #  index = X_test2.index)
-            #derr1 = pd.Series(scaled_test_err1, index = test_err1.index)
-            #derr2 = pd.Series(scaled_test_err2, index = test_err2.index)
-            
-            #print(type(test_err1))
-            #print(type(scaled_test_err1))
-            #train(errmodel, dtest1, derr1)
-            #test(errmodel, dtest2, derr2)
-            #print(X_test1)
-            #print(scaled_X_test1)
-            #print(dtest1)
-            
-            #plot("qassplot3", errmodel, dtest2, derr2) 
-            
-            
-                                               
-                #tri = Delaunay(X_test1.values, qhull_options="Qc QbB Qx Qz")                 
-                #f = interpolate.LinearNDInterpolator(tri, test_err1.values)
-                
-                 
-        # Test surrogate (nearest neighbor interpolator) on split error data        
-                                 
-        errordist_test = interpolate.NearestNDInterpolator(X_test1.values, test_err1.values)
-        pred_err1 = errordist_test(X_test1.values)    
-        pred_err2 = errordist_test(X_test2.values)
-        
-        # Train surrogate (nearest neighbor interpolator) for error function
-        
-        errordist = interpolate.NearestNDInterpolator(X_test.values, test_err.values)
-        pred_err = errordist(X_test.values)
-        
-        max_err = max(test_err.values)
-        print('Max error: ' + str(max_err))
-        this_metrics['maxerr'] = max_err
-        plt.figure()
-        plot_results("qassplot3", pred_err2, test_err2) 
-        
-        plt.figure()
-        plt.hist(test_err.values, bins=100)
-        plt.savefig("qassplot4.pdf", format="pdf")   
-        
-        
-        
-        # Perform MCMC on error function
-        
-        saveinterval = 5
-        nburn = 10000
-        nrun = 50000
-        
-        initial_sample = X_train.iloc[0]
-        #print(initial_sample.values)
-        #print(errordist(initial_sample.values))
-        burnin_sample, burnin_dist, burnin_acceptance = burnin_MH(errordist, initial_sample.values, nburn)
-        saved_samples, saved_dists, run_acceptance = run_MH(errordist, burnin_sample, nrun, saveinterval)
-        
-        plt.figure()
-        plt.hist(saved_dists, bins=100)
-        plt.savefig("qassplot5.pdf", format="pdf") 
-        
-        print('MCMC run finished.')
-        print('Burn-In Acceptance: ' + str(burnin_acceptance))
-        print('Run Acceptance: ' + str(run_acceptance))
-        this_metrics['burn_acc'] = burnin_acceptance
-        this_metrics['run_acc'] = run_acceptance
-        
-                
-        # Extract candidate samples from MCMC output and calculate mutual crowding distance
-        
-        #cand_cdms = []
-        samplestep = int(saved_samples.shape[0] / step_candidates)
-        candidates = saved_samples[::samplestep]
-
-        #for candidate in candidates:
-        #    cand_cdms.append( cdm(candidate,candidates) )
-
-        # Rank candidate samples by error value, and filter out crowded samples
-        
-        new_samples = pd.DataFrame(candidates, columns = current_samples.columns)
-        new_samples['error'] = saved_dists[::samplestep]
-        #new_samples['cdm'] = cand_cdms 
-            
-        new_samples = new_samples.sort_values(by='error', ascending=False)
-
-        #indexNames = new_samples[ new_samples['cdm'] <= new_samples['cdm'].median() ].index
-        #new_samples.drop(indexNames , inplace=True)
-        
-        #new_samples.drop(columns=['error'])
-        #new_samples.drop(columns=['cdm'])
-        new_samples = new_samples.head(step_new_samples).reset_index()
-        
-        print(new_samples)
-        
-        # Add new samples and corresponding TBR evaluations to current sample set
-        
-        new_output = thistheory(params = new_samples.join(pd.concat([d.head(1)]*step_new_samples, ignore_index=True)), domain = domain, n_samples = step_new_samples)
+        new_output = thistheory(params = new_samples, domain = domain, n_samples = step_samples)
         new_samples, new_d, new_y_multiple = c_d_y_split(new_output)
         new_tbr = new_y_multiple['tbr']
         
-        
-        # Add new random samples
-        
-        new_rand_samples = domain.gen_data_frame(sampling_strategy, step_rand_samples)
-        
-        new_rand_output = thistheory(params = new_rand_samples, domain = domain, n_samples = step_rand_samples)
-        new_rand_samples, new_rand_d, new_rand_y_multiple = c_d_y_split(new_rand_output)
-        new_rand_tbr = new_rand_y_multiple['tbr']
-        
-        current_samples = pd.concat([current_samples, new_samples, new_rand_samples], ignore_index=True)
-        current_tbr = pd.concat([current_tbr, new_tbr, new_rand_tbr], ignore_index=True)
+        current_samples = pd.concat([current_samples, new_samples], ignore_index=True)
+        current_tbr = pd.concat([current_tbr, new_tbr], ignore_index=True)
     
     
         # Check completion conditions and close loop
     
-        if max_err < err_target or iter_count > max_iter_count:
+        if iter_count > max_iter_count:
             complete_condition = True
         
         all_metrics = pd.concat([all_metrics,this_metrics], ignore_index=True)
         print(all_metrics)
-        all_metrics.to_csv('qassmetrics.csv')
+        all_metrics.to_csv('qassfakemetrics.csv')
 
 
-    print('QASS finished.')
+    print('FAKE QASS finished.')
 
 
 def input_parse():
@@ -429,84 +303,6 @@ def normalize_c(c):
     c['blanket_thickness'] /= 500
     c['firstwall_thickness'] /= 20
     return c
-
-def step_MH(errordist, current_sample, dist_current, verbose=False):
-
-    maxs = np.array([20, 500, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-    
-    nvar = current_sample.size
-    cov = np.diag(maxs) * 0.01
-    
-    if verbose:
-        print("Current sample:")
-        print(current_sample)
-    candidate_sample = np.random.multivariate_normal(current_sample, cov)
-    
-    if verbose:
-        print("Candidate sample:")
-        print(candidate_sample)
-    
-    it = np.nditer(candidate_sample, op_flags = ['readwrite'], flags = ['f_index'])
-    while not it.finished:
-        ind = it.index
-        if it[0] != max(min(it[0],maxs[ind]),0):
-            #print("Candidate rejected")
-            return current_sample, dist_current, 0
-        it.iternext()
-
-    dist_candidate = errordist(candidate_sample)
-
-    acceptance_prob = min(1.0,dist_candidate/dist_current); # Metropolis-Hastings condition
-    accept_rand = np.random.uniform(0,1,1)
-    if(accept_rand < acceptance_prob and acceptance_prob>0):
-        if verbose:
-            print("Candidate accepted")
-        return candidate_sample, dist_candidate, 1
-    else:
-        if verbose:
-            print("Candidate rejected")
-        return current_sample, dist_current, 0
-        
-def burnin_MH(errordist, initial_sample, nburn):
-
-    current_sample = initial_sample
-    dist_current = errordist(current_sample)
-    
-    n_accept = 0
-    
-    for i in range(nburn):
-        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current);  # Run one iteration of Markov Chain
-        n_accept += if_accepted
-        
-    return current_sample, dist_current, n_accept/nburn
-
-def run_MH(errordist, initial_sample, nrun, saveinterval):
-
-    nvar = initial_sample.size
-    current_sample = initial_sample
-    dist_current = errordist(current_sample)
-    
-    n_accept = 0
-    
-    saved_samples = np.empty((0,nvar), float)
-    saved_dists = np.empty((0,1), float)
-    
-    for i in range(nrun):
-        current_sample, dist_current, if_accepted = step_MH(errordist, current_sample, dist_current);  # Run one iteration of Markov Chain
-        n_accept += if_accepted
-        
-        if if_accepted and n_accept/saveinterval == int(n_accept/saveinterval):
-            saved_samples = np.append(saved_samples, current_sample)
-            saved_dists = np.append(saved_dists, dist_current)
-    
-    return saved_samples.reshape((int(n_accept/saveinterval),nvar)), saved_dists, n_accept/nrun
-    
-def cdm(candidate, dataset):
-    cdm = 0
-    for sample in dataset:
-        cdmadd = np.linalg.norm(candidate-sample)
-        cdm += cdmadd
-    return cdm                  
 
 
 
