@@ -131,7 +131,9 @@ def main():
         kfold = KFold(n_splits=k_folds, shuffle=True,
                       random_state=random_state)
         kfold_scores = []
-        extra_values = {column: [] for column in extra_columns}
+        extra_values = {column: -1 for column in extra_columns}
+
+        salvage_errors = True
 
         fold_idx = 0
         for train_index, test_index in kfold.split(X, y):
@@ -164,6 +166,12 @@ def main():
             except Exception as e:
                 print(
                     f'WARNING: Fold {fold_idx+1} of {k_folds} failed with error: {e}')
+
+                if salvage_errors:
+                    # TODO: vary this depending on metric
+                    kfold_scores.append(0)
+                else:
+                    raise e
 
             print(f'Fold {fold_idx+1} of {k_folds} done.')
             fold_idx += 1
