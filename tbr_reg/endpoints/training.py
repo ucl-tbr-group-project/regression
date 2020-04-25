@@ -1,4 +1,5 @@
 import sys
+import time
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,7 +54,6 @@ def main():
             included_features = [line.strip() for line in f.readlines()
                                  if len(line) > 0]
             X = X[included_features].copy()
-    
 
     if args.prev_model != '0':
         prev_model_name, prev_model = load_model_from_file(args.prev_model)
@@ -109,11 +109,28 @@ def train(model, X_train, y_train):
 
 
 def test(model, X_test, y_test):
+    all_metrics = [init_metric()
+                   for init_metric in get_metric_factory().values()]
+
     print(f'Testing regressor on set of size {X_test.shape[0]}')
-    evaluation = model.evaluate(X_test.to_numpy(), y_test.to_numpy())
-    print(
-        f'Evaluation on test set of size {X_test.shape[0]} gives result: {evaluation}')
-    return evaluation
+
+    tic = time.time()
+    y_pred = model.predict(X_test.to_numpy())
+    toc = time.time()
+
+    y_test = y_test.to_numpy()
+
+    evaluations = {}
+    for metric in all_metrics:
+        evaluation = metric.evaluate(X_test, y_test, y_pred)
+        print(
+            f'Evaluation on test set of size {X_test.shape[0]} gives {metric.name} result: {evaluation}')
+        evaluations[metric.id] = evaluation
+
+    time_pred = 1000 * (toc - tic) / X_test.shape[0]
+    print(f'Prediction time per sample: {time_pred} ms')
+
+    return evaluations['mae']
 
 
 def plot(save_plot_path, model, X_test, y_test):
@@ -125,7 +142,7 @@ def plot(save_plot_path, model, X_test, y_test):
 
     fig, ax = plot_reg_performance(df, density_bins=80)
     plt.tight_layout()
-    
+
     print(save_plot_path)
 
     if save_plot_path == 'int':
@@ -133,9 +150,10 @@ def plot(save_plot_path, model, X_test, y_test):
     else:
         plt.savefig('%s.png' % save_plot_path)
         plt.savefig('%s.pdf' % save_plot_path)
-        
+
+
 def plot_results(save_plot_path, y_pred, y_test):
-    df = pd.DataFrame() 
+    df = pd.DataFrame()
     df.insert(0, 'tbr', -1.)
     df.insert(0, 'tbr_pred', -1.)
     df['tbr'] = y_test
@@ -143,7 +161,7 @@ def plot_results(save_plot_path, y_pred, y_test):
 
     fig, ax = plot_reg_performance(df, density_bins=80)
     plt.tight_layout()
-    
+
     print(save_plot_path)
 
     if save_plot_path == 'int':
@@ -151,13 +169,14 @@ def plot_results(save_plot_path, y_pred, y_test):
     else:
         plt.savefig('%s.png' % save_plot_path)
         plt.savefig('%s.pdf' % save_plot_path)
-        
-def get_metrics(model, X_test, y_test): 
+
+
+def get_metrics(model, X_test, y_test):
 
     df = X_test.copy()
-    
+
     in_columns = list(df.columns)
-    
+
     df.insert(0, 'tbr', -1.)
     df.insert(0, 'tbr_pred', -1.)
     df['tbr'] = y_test
@@ -173,9 +192,8 @@ def get_metrics(model, X_test, y_test):
         out_vals.append(metric_value)
         out_names.append(metric.name)
 
-    return pd.DataFrame([out_vals], columns=out_names)       
-     
-        
+    return pd.DataFrame([out_vals], columns=out_names)
+
 
 if __name__ == '__main__':
     main()
