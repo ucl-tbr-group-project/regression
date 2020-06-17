@@ -11,6 +11,7 @@ from ..metric_loader import get_metric_factory
 def run_search(model_dict, metric, args):
     fig, ax = plot_reg_vs_time(model_dict,
                                performance_axis='mean_metric_%s' % metric.id, performance_axis_label='Regression performance ($%s$)' % metric.latex_name,
+                               time_axis_limits=(0, 0.5), performance_axis_limits=(0.5, 1),
                                select_top_n=args.n_top_models)
 
     plt.tight_layout()
@@ -48,7 +49,7 @@ def main():
                         help='CSV file type: search or benchmark')
     args = parser.parse_args()
 
-    # set_plotting_style()
+    set_plotting_style()
 
     file_name = None
     if args.type == 'search':

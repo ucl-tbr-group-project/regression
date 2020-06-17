@@ -6,7 +6,7 @@ from .metric_loader import get_metric_factory
 
 
 def plot_reg_vs_time(dfs, select_top_n=5,
-                     time_axis='mean_time_pred', time_axis_label='Prediction time per sample [ms]', time_axis_factor=1000, time_axis_limits=[0, 0.6],
+                     time_axis='mean_time_pred', time_axis_label='Prediction time per sample [ms]', time_axis_factor=1000, time_axis_limits=[0, 2.15],
                      performance_axis='mean_score', performance_axis_label='Regression performance', performance_axis_limits=[0.4, 1],
                      performance_ascending=False, training_set_size=None):
     fig, ax = plt.subplots()

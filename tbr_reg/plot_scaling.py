@@ -9,7 +9,7 @@ from .metric_loader import get_metric_factory
 def plot_scaling(dfs,
                  size_axis='train_size', size_axis_label='Training set size',
                  performance_axis='mean_score', performance_axis_label='Regression performance',
-                 performance_axis_factor=1):
+                 performance_axis_factor=1, performance_axis_limits=None):
     fig, ax = plt.subplots()
 
     markers = itertools.cycle(('o', 'v', 's', 'D', 'p', 'x', '+'))
@@ -29,6 +29,10 @@ def plot_scaling(dfs,
 
     ax.set_xlabel(size_axis_label)
     ax.set_ylabel(performance_axis_label)
+
+    if performance_axis_limits is not None:
+        ax.set_ylim(performance_axis_limits)
+
     ax.legend()
 
     return fig, ax

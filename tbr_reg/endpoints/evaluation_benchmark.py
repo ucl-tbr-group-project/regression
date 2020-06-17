@@ -27,10 +27,10 @@ def main():
 
     if args.performance_metric == 'time_pred':
         fig, ax = plot_scaling(model_dict, performance_axis='mean_time_pred', performance_axis_factor=1e3,
-                               performance_axis_label='Prediction time per sample [ms]')
+                               performance_axis_label='Prediction time per sample [ms]', performance_axis_limits=(-0.1, 7))
     elif args.performance_metric == 'time_train':
         fig, ax = plot_scaling(model_dict, performance_axis='mean_time_train', performance_axis_factor=1e3,
-                               performance_axis_label='Training time per sample [ms]')
+                               performance_axis_label='Training time per sample [ms]', performance_axis_limits=(-0.1, 34))
     else:
         metric = get_metric_factory()[args.performance_metric]()
         fig, ax = plot_scaling(model_dict,
