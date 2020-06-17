@@ -4,6 +4,7 @@ import argparse
 import os
 
 from ..plot_reg_vs_time import plot_reg_vs_time
+from ..plot_pareto import plot_pareto
 from ..plot_utils import set_plotting_style
 from ..metric_loader import get_metric_factory
 
@@ -13,6 +14,15 @@ def run_search(model_dict, metric, args):
                                performance_axis='mean_metric_%s' % metric.id, performance_axis_label='Regression performance ($%s$)' % metric.latex_name,
                                time_axis_limits=(0, 0.5), performance_axis_limits=(0.5, 1),
                                select_top_n=args.n_top_models)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def run_pareto(model_dict, metric, args):
+    fig, ax = plot_pareto(model_dict,
+                          performance_axis='mean_metric_%s' % metric.id, performance_axis_label='Regression performance ($%s$)' % metric.latex_name,
+                          time_axis_limits=(0, 0.5), performance_axis_limits=(0.5, 1))
 
     plt.tight_layout()
     plt.show()
@@ -52,7 +62,7 @@ def main():
     set_plotting_style()
 
     file_name = None
-    if args.type == 'search':
+    if args.type == 'search' or args.type == 'search_pareto':
         file_name = 'search.csv'
     elif args.type == 'benchmark':
         file_name = 'benchmark.csv'
@@ -68,6 +78,8 @@ def main():
 
     if args.type == 'search':
         run_search(model_dict, metric, args)
+    elif args.type == 'search_pareto':
+        run_pareto(model_dict, metric, args)
     elif args.type == 'benchmark':
         run_benchmark(model_dict, metric, args)
 
